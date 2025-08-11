@@ -43,12 +43,17 @@ fun canUseSuggestions(editorInfo: EditorInfo): Boolean {
 }
 
 /**
- * @return A KeyEvent made from the given one, but with the given key code, meta state, action and source.
+ * @return A KeyEvent made from the given one, but with the given key code, meta state, action, and source.
  */
 fun makeKeyEvent(original: KeyEvent, code: Int, metaState: Int, action: Int, source: Int): KeyEvent {
-	return KeyEvent(original.downTime, original.eventTime, action, code, original.repeatCount, metaState, KeyCharacterMap.VIRTUAL_KEYBOARD, code, 0, source)
+	return makeKeyEvent(original, code, metaState, action, source, KeyCharacterMap.VIRTUAL_KEYBOARD)
 }
-
+/**
+ * @return A KeyEvent made from the given one, but with the given key code, meta state, action, source, and deviceId.
+ */
+fun makeKeyEvent(original: KeyEvent, code: Int, metaState: Int, action: Int, source: Int, deviceId: Int): KeyEvent {
+	return KeyEvent(original.downTime, original.eventTime, action, code, original.repeatCount, metaState, deviceId, code, 0, source)
+}
 val templates = hashMapOf(
 	"fr" to hashMapOf(
 		KeyEvent.KEYCODE_A to arrayOf('`', '^', 'æ', MPSUBST_BYPASS),
@@ -385,9 +390,9 @@ class InputMethodService : AndroidInputMethodService() {
 				sendKey(modKey, event, false)
 				return true
 			} else if (kbdKey != 0) {
-				// Simulate a keypress of the shortpress or longpress key.
-				sendKey(kbdKey, event, true)
-				sendKey(kbdKey, event, false)
+				// Simulate tapping the shortpress or longpress key.
+				simulateKeyTap(kbdKey, event)
+				consumeModifierNext()
 				return true
 			}
 		}
@@ -407,6 +412,9 @@ class InputMethodService : AndroidInputMethodService() {
 	 * Handle a key down event when the SYM modifier is enabled.
 	 */
 	private fun onSymKey(event: KeyEvent, pressed: Boolean): Boolean {
+		if (InputDevice.getDevice(event.deviceId)?.name == "aw9523b-key") {
+			return onMP01SymKey(event, pressed);
+		}
 
 		// The SPACE key is equivalent to hitting Shift
 		if(event.keyCode == KeyEvent.KEYCODE_SPACE) {
@@ -487,6 +495,80 @@ class InputMethodService : AndroidInputMethodService() {
 	}
 
 	/**
+	 * MP01 bindings to handle a key down event when the SYM modifier is enabled.
+	 */
+	private fun onMP01SymKey(event: KeyEvent, pressed: Boolean): Boolean {
+		// Some keys simulate a D-Pad
+		val dpadKey = when(event.keyCode) {
+			// WASD to directional keys
+			KeyEvent.KEYCODE_W -> KeyEvent.KEYCODE_DPAD_UP
+			KeyEvent.KEYCODE_A -> KeyEvent.KEYCODE_DPAD_LEFT
+			KeyEvent.KEYCODE_S -> KeyEvent.KEYCODE_DPAD_DOWN
+			KeyEvent.KEYCODE_D -> KeyEvent.KEYCODE_DPAD_RIGHT
+			else -> 0
+		}
+		if(dpadKey != 0) {
+			sendDPadKey(dpadKey, event, pressed)
+			return true
+		}
+
+		// Some keys simulate keyboard keys
+		val kbdKey = when(event.keyCode) {
+			KeyEvent.KEYCODE_Q -> KeyEvent.KEYCODE_PAGE_UP
+			KeyEvent.KEYCODE_E -> KeyEvent.KEYCODE_PAGE_DOWN
+			KeyEvent.KEYCODE_R -> KeyEvent.KEYCODE_MOVE_HOME
+			KeyEvent.KEYCODE_F -> KeyEvent.KEYCODE_MOVE_END
+			KeyEvent.KEYCODE_Z -> KeyEvent.KEYCODE_TAB
+			KeyEvent.KEYCODE_X -> KeyEvent.KEYCODE_CUT //CUT
+			KeyEvent.KEYCODE_C -> KeyEvent.KEYCODE_COPY // COPY
+			KeyEvent.KEYCODE_V -> KeyEvent.KEYCODE_PASTE // PASTE
+			else -> 0
+		}
+		if(kbdKey != 0) {
+			sendKey(kbdKey, event, pressed)
+			return true
+		}
+
+		// Some keys type text
+		if(event.repeatCount == 0 && !event.isLongPress && pressed) {
+			val str = when(event.keyCode) {
+				KeyEvent.KEYCODE_T -> "~"
+				KeyEvent.KEYCODE_G -> "`"
+				KeyEvent.KEYCODE_Y -> "["
+				KeyEvent.KEYCODE_U -> "]"
+				KeyEvent.KEYCODE_I -> "|"
+				KeyEvent.KEYCODE_O -> "("
+				KeyEvent.KEYCODE_P -> ")"
+				KeyEvent.KEYCODE_H -> "{"
+				KeyEvent.KEYCODE_J -> "}"
+				KeyEvent.KEYCODE_K -> "^"
+				KeyEvent.KEYCODE_L -> "€"
+				KeyEvent.KEYCODE_B -> "\\"
+				KeyEvent.KEYCODE_N -> "/"
+				KeyEvent.KEYCODE_M -> "<"
+				KeyEvent.KEYCODE_PERIOD -> ">"
+				else -> null
+			}
+			if(str != null) {
+				sendCharacter(str)
+				return true
+			}
+		}
+
+		// Other non-printing keys pass through
+		if(!event.isPrintingKey) {
+			return if(pressed) {
+				super.onKeyDown(event.keyCode, event)
+			} else {
+				super.onKeyUp(event.keyCode, event)
+			}
+		}
+
+		// The rest is ignored
+		return false
+	}
+
+	/**
 	 * Send a D-Pad key press or release.
 	 */
 	private fun sendDPadKey(code: Int, original: KeyEvent, pressed: Boolean) {
@@ -509,6 +591,17 @@ class InputMethodService : AndroidInputMethodService() {
 			text = text.uppercase(Locale.getDefault())
 		}
 		currentInputConnection?.commitText(text, 1)
+	}
+
+	private fun simulateKeyTap(code: Int, original: KeyEvent) {
+		val event = makeKeyEvent(original, code, original.metaState, original.action, original.source, original.deviceId)
+		if (sym.get()) {
+			onSymKey(event, true)
+			onSymKey(event, false)
+		} else {
+			sendKey(code, event, true)
+			sendKey(code, event, false)
+		}
 	}
 
 	/**
