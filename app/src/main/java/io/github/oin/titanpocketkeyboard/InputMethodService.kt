@@ -5,7 +5,6 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.text.InputType
 import android.text.TextUtils
-import android.util.Log
 import android.view.InputDevice
 import android.view.KeyCharacterMap
 import android.view.KeyEvent
@@ -13,6 +12,16 @@ import android.view.inputmethod.EditorInfo
 import androidx.preference.PreferenceManager
 import java.util.Locale
 import android.inputmethodservice.InputMethodService as AndroidInputMethodService
+
+/**
+ * MP01 keycode sent instead of KeyEvent.KEYCODE_EMOJI_PICKER.
+ */
+const val MP01_KEYCODE_EMOJI_PICKER = 666;
+
+/**
+ * MP01 keycode sent instead of KeyEvent.KEYCODE_DICTATE.
+ */
+const val MP01_KEYCODE_DICTATE = 667;
 
 /**
  * @return true if it is suitable to provide suggestions or text transforms in the given editor.
@@ -108,9 +117,17 @@ class InputMethodService : AndroidInputMethodService() {
 	private val shift = Modifier()
 	private val alt = Modifier()
 	private val sym = SimpleModifier()
+	private val dotCtrl = TripleModifier(KeyEvent.KEYCODE_CTRL_RIGHT, KeyEvent.KEYCODE_PERIOD, KeyEvent.KEYCODE_VOICE_ASSIST)
+	private val emojiMeta = TripleModifier(KeyEvent.KEYCODE_META_LEFT, KeyEvent.KEYCODE_PICTSYMBOLS, KeyEvent.KEYCODE_0)
+	private val caps = Modifier()
+	
 	private var lastShift = false
 	private var lastAlt = false
 	private var lastSym = false
+	private var lastDotCtrl = false
+	private var lastEmojiMeta = false
+	private var lastCaps = false
+
 
 	private var autoCapitalize = false
 
@@ -143,6 +160,8 @@ class InputMethodService : AndroidInputMethodService() {
 			KeyEvent.KEYCODE_B to arrayOf(MPSUBST_TOGGLE_ALT, '…', 'ß', '∫', '♭', MPSUBST_TOGGLE_SHIFT, MPSUBST_BYPASS),
 			KeyEvent.KEYCODE_N to arrayOf(MPSUBST_TOGGLE_ALT, '~', '¬', '∩', MPSUBST_TOGGLE_SHIFT, MPSUBST_BYPASS),
 			KeyEvent.KEYCODE_M to arrayOf(MPSUBST_TOGGLE_ALT, '$', '€', '£', '¿', MPSUBST_TOGGLE_SHIFT, MPSUBST_BYPASS),
+			MP01_KEYCODE_EMOJI_PICKER to arrayOf(MPSUBST_TOGGLE_ALT, MPSUBST_BYPASS),
+			MP01_KEYCODE_DICTATE to arrayOf(MPSUBST_TOGGLE_ALT, MPSUBST_BYPASS),
 			KeyEvent.KEYCODE_SPACE to arrayOf('\t', '⇥', MPSUBST_BYPASS)
 		)
 	))
@@ -194,11 +213,14 @@ class InputMethodService : AndroidInputMethodService() {
 		// Update modifier states
 		if(!event.isLongPress && event.repeatCount == 0) {
 			when(event.keyCode) {
-				KeyEvent.KEYCODE_ALT_RIGHT -> {
+				KeyEvent.KEYCODE_ALT_LEFT, KeyEvent.KEYCODE_ALT_RIGHT -> {
 					alt.onKeyDown()
 					updateStatusIconIfNeeded(true)
 				}
-				KeyEvent.KEYCODE_SHIFT_LEFT -> {
+				KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_SHIFT_RIGHT  -> {
+					if (caps.get()) {
+						caps.reset()
+					}
 					shift.onKeyDown()
 					updateStatusIconIfNeeded(true)
 				}
@@ -207,11 +229,24 @@ class InputMethodService : AndroidInputMethodService() {
 					onSymPossiblyChanged(true)
 					updateStatusIconIfNeeded(true)
 				}
+				MP01_KEYCODE_DICTATE -> {
+					dotCtrl.onKeyDown()
+					updateStatusIconIfNeeded(true)
+				}
+				MP01_KEYCODE_EMOJI_PICKER -> {
+					emojiMeta.onKeyDown()
+					updateStatusIconIfNeeded(true)
+				}
 			}
 		}
 
 		if(event.isCtrlPressed) {
 			return super.onKeyDown(keyCode, event)
+		}
+
+		// Apply any special logic for triple modifiers that may modify key handling.
+		if (tripleModifierOnKeyDown(keyCode, event)) {
+			return true
 		}
 
 		// Use special behavior when the SYM modifier is enabled
@@ -268,14 +303,52 @@ class InputMethodService : AndroidInputMethodService() {
 		return super.onKeyDown(keyCode, event)
 	}
 
+	fun tripleModifierOnKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+		if (event.keyCode == MP01_KEYCODE_EMOJI_PICKER || event.keyCode == MP01_KEYCODE_DICTATE) {
+			val tripleMod =
+				if (event.keyCode == MP01_KEYCODE_EMOJI_PICKER) emojiMeta else dotCtrl;
+			if (!tripleMod.get()) {
+				tripleMod.onKeyDown();
+			}
+			if (multipress.process(event, enhancedMetaState(event)) == MPSUBST_BYPASS) {
+				return true;
+			}
+			if (!tripleMod.isLongPress()) {
+				tripleMod.activateLongPress()
+				vibrate()
+			}
+			return true
+		} else if (KeyEvent.isModifierKey(event.keyCode)) {
+			// pass
+		} else if (dotCtrl.get() && dotCtrl.getModKey() == 0) {
+			// mark that we've activated the mod key, then send ctrl.
+			dotCtrl.activateModKey()
+			sendKey(dotCtrl.getModKey(), event, true)
+		} else if (emojiMeta.get() && emojiMeta.getModKey() == 0) {
+			// mark that we've activated the mod key, then send meta.
+			emojiMeta.activateModKey()
+			sendKey(emojiMeta.getModKey(), event, true)
+		}
+		// Prioritizing ctrl/meta, so commenting this out:
+		// if(sym.get()) { return onSymKey(event, true) }
+
+		// If either modkey is active, send the key as a keypress.
+		if (dotCtrl.getModKey() != 0 || emojiMeta.getModKey() != 0) {
+			sendKey(keyCode, event, true)
+			sendKey(keyCode, event, false)
+			return true
+		}
+		return false
+	}
+
 	override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
 		// Update modifier states
 		when(event.keyCode) {
-			KeyEvent.KEYCODE_ALT_RIGHT -> {
+			KeyEvent.KEYCODE_ALT_LEFT, KeyEvent.KEYCODE_ALT_RIGHT -> {
 				alt.onKeyUp()
 				updateStatusIconIfNeeded(true)
 			}
-			KeyEvent.KEYCODE_SHIFT_LEFT -> {
+			KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_SHIFT_RIGHT  -> {
 				shift.onKeyUp()
 				updateStatusIconIfNeeded(true)
 			}
@@ -286,12 +359,48 @@ class InputMethodService : AndroidInputMethodService() {
 			}
 		}
 
+		// Apply any special logic for triple modifiers that may modify key handling.
+		if (tripleModifierOnKeyUp(keyCode, event)) {
+			return true
+		}
 		// Use special behavior when the SYM modifier is enabled
 		if(sym.get()) {
 			return onSymKey(event, false)
 		}
 
 		return super.onKeyUp(keyCode, event)
+	}
+
+	/**
+	 * Handle a triple modifier key up, which may send additional key presses or actions depending on if a key was pressed or how long it was held.
+	 */
+	private fun tripleModifierOnKeyUp(keyCode: Int, event: KeyEvent): Boolean {
+		if (keyCode == MP01_KEYCODE_DICTATE || keyCode == MP01_KEYCODE_EMOJI_PICKER) {
+			val modifier = if (event.keyCode == MP01_KEYCODE_EMOJI_PICKER) emojiMeta else dotCtrl;
+			val kbdKey = modifier.getKey()
+			val modKey = modifier.getModKey()
+			modifier.reset();
+			updateStatusIconIfNeeded(true)
+			if (modKey != 0) {
+				sendKey(modKey, event, false)
+				return true
+			} else if (kbdKey != 0) {
+				// Simulate a keypress of the shortpress or longpress key.
+				sendKey(kbdKey, event, true)
+				sendKey(kbdKey, event, false)
+				return true
+			}
+		}
+
+		// Prioritizing ctrl/meta, so commenting this out:
+		// if(sym.get()) { return onSymKey(event, false) }
+
+		if (dotCtrl.getModKey() != 0 || emojiMeta.getModKey() != 0) {
+			sendKey(keyCode, event, false)
+			return true
+		}
+
+		return false
 	}
 
 	/**
@@ -396,7 +505,7 @@ class InputMethodService : AndroidInputMethodService() {
 	 */
 	private fun sendCharacter(str: String, strict: Boolean = false) {
 		var text = str
-		if(!strict && shift.get()) {
+		if (!strict && (shift.get() || caps.get())) {
 			text = text.uppercase(Locale.getDefault())
 		}
 		currentInputConnection?.commitText(text, 1)
@@ -416,7 +525,10 @@ class InputMethodService : AndroidInputMethodService() {
 		val shiftState = shift.get()
 		val altState = alt.get()
 		val symState = sym.get()
-		if(force || symState != lastSym || altState != lastAlt || shiftState != lastShift) {
+		val ctrlState = dotCtrl.get()
+		val capsState = caps.get()
+		val metaState = emojiMeta.get()
+		if(force || symState != lastSym || altState != lastAlt || shiftState != lastShift || capsState != lastCaps || ctrlState != lastDotCtrl || metaState != lastEmojiMeta) {
 			if(sym.get()) {
 				if(shift.get()) {
 					showStatusIcon(R.drawable.symshift)
@@ -424,13 +536,15 @@ class InputMethodService : AndroidInputMethodService() {
 					showStatusIcon(R.drawable.sym)
 				}
 			} else if(alt.get()) {
-				showStatusIcon(R.drawable.alt)
+				showStatusIcon(if (alt.isLocked()) R.drawable.altlock else R.drawable.alt)
+			} else if (dotCtrl.get()) {
+				showStatusIcon(if (dotCtrl.isLocked()) R.drawable.ctrllock else R.drawable.ctrl)
 			} else if(shift.get()) {
-				if(shift.isLocked()) {
-					showStatusIcon(R.drawable.shiftlock)
-				} else {
-					showStatusIcon(R.drawable.shift)
-				}
+				showStatusIcon(if(shift.isLocked()) R.drawable.shiftlock else R.drawable.shift)
+			} else if(caps.get()) {
+				showStatusIcon(if(caps.isLocked()) R.drawable.capslock else R.drawable.caps)
+			} else if(emojiMeta.get()) {
+				showStatusIcon(R.drawable.meta) 
 			} else {
 				hideStatusIcon()
 			}
@@ -438,6 +552,9 @@ class InputMethodService : AndroidInputMethodService() {
 		lastShift = shiftState
 		lastAlt = altState
 		lastSym = symState
+		lastDotCtrl = ctrlState
+		lastCaps = capsState
+		lastEmojiMeta = metaState
 	}
 
 	/**
@@ -452,7 +569,7 @@ class InputMethodService : AndroidInputMethodService() {
 		}
 
 		if(currentInputConnection.getCursorCapsMode(TextUtils.CAP_MODE_SENTENCES) > 0 && canUseSuggestions(currentInputEditorInfo)) {
-			shift.activateForNext()
+			caps.activateForNext()
 			updateStatusIconIfNeeded()
 		}
 	}
@@ -463,6 +580,8 @@ class InputMethodService : AndroidInputMethodService() {
 	private fun consumeModifierNext() {
 		shift.nextDidConsume()
 		alt.nextDidConsume()
+		caps.nextDidConsume()
+		dotCtrl.nextDidConsume()
 		updateStatusIconIfNeeded()
 	}
 
@@ -474,10 +593,20 @@ class InputMethodService : AndroidInputMethodService() {
 		if(shift.get()) {
 			metaState = metaState or KeyEvent.META_SHIFT_ON
 		}
+		if(caps.get()) {
+			metaState = metaState or KeyEvent.META_CAPS_LOCK_ON
+		}
 		if(alt.get()) {
 			metaState = metaState or KeyEvent.META_ALT_ON
 		}
-		return metaState
+		if (dotCtrl.getModKey() != 0) {
+			metaState = metaState or KeyEvent.META_CTRL_ON
+		}
+		if (emojiMeta.getModKey() != 0) {
+			metaState = metaState or KeyEvent.META_META_ON
+		}
+		// Strip the sym state if it is pressed.
+		return metaState and KeyEvent.META_SYM_ON.inv()
 	}
 
 	/**
