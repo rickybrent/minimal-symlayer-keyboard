@@ -23,6 +23,13 @@ const val MP01_KEYCODE_EMOJI_PICKER = 666;
  */
 const val MP01_KEYCODE_DICTATE = 667;
 
+// Only for modifier keys we want to force when using sym+keys to navigate.
+val forceModifierPairs = listOf(
+		KeyEvent.META_SHIFT_ON to KeyEvent.KEYCODE_SHIFT_LEFT,
+		KeyEvent.META_META_ON to KeyEvent.KEYCODE_META_LEFT,
+		KeyEvent.META_CTRL_ON to KeyEvent.KEYCODE_CTRL_LEFT,
+	)
+
 /**
  * @return true if it is suitable to provide suggestions or text transforms in the given editor.
  */
@@ -225,8 +232,9 @@ class InputMethodService : AndroidInputMethodService() {
 				KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_SHIFT_RIGHT  -> {
 					if (caps.get()) {
 						caps.reset()
+					} else {
+						shift.onKeyDown()
 					}
-					shift.onKeyDown()
 					updateStatusIconIfNeeded(true)
 				}
 				KeyEvent.KEYCODE_SYM -> {
@@ -572,7 +580,10 @@ class InputMethodService : AndroidInputMethodService() {
 	 * Send a D-Pad key press or release.
 	 */
 	private fun sendDPadKey(code: Int, original: KeyEvent, pressed: Boolean) {
-		currentInputConnection?.sendKeyEvent(makeKeyEvent(original, code, enhancedMetaState(original), if(pressed) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, InputDevice.SOURCE_DPAD))
+		val newState = enhancedMetaState(original)
+		forceMatchMetaState(original, newState, pressed)
+		currentInputConnection?.sendKeyEvent(makeKeyEvent(original, code, newState, if(pressed) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, InputDevice.SOURCE_DPAD))
+		forceMatchMetaState(original, newState, false)
 	}
 
 	/**
@@ -601,6 +612,18 @@ class InputMethodService : AndroidInputMethodService() {
 		} else {
 			sendKey(code, event, true)
 			sendKey(code, event, false)
+		}
+	}
+
+	/**
+	 * Forcefully match the metastate by pressing any missing modifier keys.
+	 */
+	private fun forceMatchMetaState(original: KeyEvent, enhanced: Int, pressed: Boolean) {
+		val origMeta = original.metaState
+		for ((metaOn, metaKey) in forceModifierPairs) {
+			if (origMeta and metaOn == 0 && enhanced and metaOn != 0) {
+				sendKey(metaKey, original, pressed)
+			}
 		}
 	}
 
