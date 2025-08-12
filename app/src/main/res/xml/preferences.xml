@@ -70,5 +70,8 @@
 			android:key="Reset"
 			android:title="Reset to defaults"
 			/>
+		<Preference
+			android:title="About"
+			app:fragment="io.github.oin.titanpocketkeyboard.SettingsActivity$AboutFragment" />
 	</PreferenceCategory>
 </PreferenceScreen>

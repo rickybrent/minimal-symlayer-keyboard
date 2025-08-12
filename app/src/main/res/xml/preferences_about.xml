@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="About">
+        <Preference
+            android:key="about_version"
+            android:title="@string/app_name" />
+        <Preference
+            android:key="about_main_license"
+            android:title="View License"
+            android:summary="GNU General Public License v3.0"/>
+        <Preference
+            android:key="about_third_party"
+            android:title="Third-Party Licenses"
+            android:summary="Open source components used in this app."/>
+        <Preference
+            android:key="about_github"
+            android:title="View on GitHub"
+            android:summary="Find the source code, report issues, or contribute."/>
+    </PreferenceCategory>
+</PreferenceScreen>
