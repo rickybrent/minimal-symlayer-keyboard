@@ -2,6 +2,7 @@ package io.github.oin.titanpocketkeyboard
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.SharedPreferences
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.Gravity
@@ -13,33 +14,42 @@ import android.widget.Filter
 import android.widget.ImageButton
 import android.widget.PopupWindow
 import android.widget.TextView
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-// Sealed class to represent the different types of items in our grid
+// --- Data Structures ---
 sealed class GridItem
 data class EmojiItem(val emoji: Emoji) : GridItem()
 data class CategoryHeaderItem(val category: String) : GridItem()
+object RecentsHeaderItem : GridItem()
 
 class EmojiAdapter(private val context: Context) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
 	private val allEmojis: List<Emoji>
+	private var recentEmojis: MutableList<Emoji>
 	private var displayList: List<GridItem> = emptyList()
 
 	private var emojiPopup: PopupWindow? = null
 	private var popupShownTime: Long = 0
+	private val prefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
 	companion object {
-		private const val POPUP_CLOSE_DELAY = 500 // milliseconds
-		private const val TYPE_EMOJI = 0
-		private const val TYPE_HEADER = 1
+		private const val PREF_RECENT_EMOJI = "recent_emojis"
+		private const val POPUP_CLOSE_DELAY = 500
 		private const val GRID_SPAN_COUNT = 8
+		private const val MAX_RECENTS = GRID_SPAN_COUNT
+
+		private const val TYPE_EMOJI = 0
+		private const val TYPE_CATEGORY_HEADER = 1
+		private const val TYPE_RECENTS_HEADER = 2
 	}
 
 	init {
 		allEmojis = loadEmojis(context)
+		recentEmojis = loadRecents()
 		updateDisplayList(allEmojis, isFiltering = false)
 	}
 
@@ -48,36 +58,41 @@ class EmojiAdapter(private val context: Context) : RecyclerView.Adapter<Recycler
 		val textView: TextView = view.findViewById(R.id.picker_item_emoji)
 	}
 
-	class CategoryViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+	class HeaderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 		val textView: TextView = view.findViewById(R.id.picker_category_header)
 	}
 
-	// --- RecyclerView.Adapter Overrides ---
 	override fun getItemViewType(position: Int): Int {
 		return when (displayList[position]) {
 			is EmojiItem -> TYPE_EMOJI
-			is CategoryHeaderItem -> TYPE_HEADER
+			is CategoryHeaderItem -> TYPE_CATEGORY_HEADER
+			is RecentsHeaderItem -> TYPE_RECENTS_HEADER
 		}
 	}
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
 		val inflater = LayoutInflater.from(parent.context)
-		return if (viewType == TYPE_HEADER) {
-			val view = inflater.inflate(R.layout.picker_category_header, parent, false)
-			CategoryViewHolder(view)
-		} else {
-			val view = inflater.inflate(R.layout.picker_item_emoji, parent, false)
-			EmojiViewHolder(view)
+		return when (viewType) {
+			TYPE_RECENTS_HEADER, TYPE_CATEGORY_HEADER -> {
+				val view = inflater.inflate(R.layout.picker_category_header, parent, false)
+				HeaderViewHolder(view)
+			}
+			else -> {
+				val view = inflater.inflate(R.layout.picker_item_emoji, parent, false)
+				EmojiViewHolder(view)
+			}
 		}
 	}
 
 	override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
 		when (val item = displayList[position]) {
-			is CategoryHeaderItem -> (holder as CategoryViewHolder).textView.text = item.category
+			is RecentsHeaderItem -> (holder as HeaderViewHolder).textView.text = "Recents"
+			is CategoryHeaderItem -> (holder as HeaderViewHolder).textView.text = item.category
 			is EmojiItem -> {
 				val emojiHolder = holder as EmojiViewHolder
 				emojiHolder.textView.text = item.emoji.character
 				emojiHolder.itemView.setOnClickListener {
+					addEmojiToRecents(item.emoji)
 					(context as? InputMethodService)?.currentInputConnection?.commitText(item.emoji.character, 1)
 					emojiPopup?.dismiss()
 				}
@@ -108,9 +123,38 @@ class EmojiAdapter(private val context: Context) : RecyclerView.Adapter<Recycler
 		return emojis
 	}
 
+	private fun loadRecents(): MutableList<Emoji> {
+		val jsonString = prefs.getString(PREF_RECENT_EMOJI, "") ?: ""
+		val recentChars = jsonString.split(",").filter { it.isNotEmpty() }
+		// Find the full Emoji object from the master list
+		return recentChars.mapNotNull { char -> allEmojis.find { it.character == char } }.toMutableList()
+	}
+
+	private fun saveRecents() {
+		val jsonString = recentEmojis.joinToString(",") { it.character }
+		prefs.edit().putString(PREF_RECENT_EMOJI, jsonString).apply()
+	}
+
+	private fun addEmojiToRecents(emoji: Emoji) {
+		// Remove if it exists to move it to the front
+		recentEmojis.remove(emoji)
+		// Add to the front
+		recentEmojis.add(0, emoji)
+		// Trim the list
+		while (recentEmojis.size > MAX_RECENTS) {
+			recentEmojis.removeAt(recentEmojis.lastIndex)
+		}
+		saveRecents()
+	}
+
 	@SuppressLint("NotifyDataSetChanged")
 	private fun updateDisplayList(emojis: List<Emoji>, isFiltering: Boolean) {
 		val newDisplayList = mutableListOf<GridItem>()
+		if (recentEmojis.isNotEmpty() && !isFiltering) {
+			newDisplayList.add(RecentsHeaderItem)
+			recentEmojis.forEach { newDisplayList.add(EmojiItem(it)) }
+		}
+
 		var lastCategory = ""
 		emojis.forEach { emoji ->
 			if (!isFiltering && emoji.category != lastCategory) {
@@ -137,7 +181,8 @@ class EmojiAdapter(private val context: Context) : RecyclerView.Adapter<Recycler
 				}
 				return results
 			}
-			
+
+			@Suppress("UNCHECKED_CAST")
 			override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
 				val filteredEmojis = results?.values as? List<Emoji> ?: emptyList()
 				updateDisplayList(filteredEmojis, !constraint.isNullOrEmpty())
@@ -156,7 +201,10 @@ class EmojiAdapter(private val context: Context) : RecyclerView.Adapter<Recycler
 			val layoutManager = GridLayoutManager(context, GRID_SPAN_COUNT)
 			layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
 				override fun getSpanSize(position: Int): Int {
-					return if (getItemViewType(position) == TYPE_HEADER) GRID_SPAN_COUNT else 1
+					return when (displayList.getOrNull(position)) {
+						is CategoryHeaderItem, is RecentsHeaderItem -> GRID_SPAN_COUNT
+						else -> 1
+					}
 				}
 			}
 			recyclerView.layoutManager = layoutManager
@@ -176,6 +224,7 @@ class EmojiAdapter(private val context: Context) : RecyclerView.Adapter<Recycler
 					if (event.action == android.view.KeyEvent.ACTION_DOWN) { return@setOnKeyListener true }
 					if (event.action == android.view.KeyEvent.ACTION_UP) {
 						displayList.firstOrNull { it is EmojiItem }?.let {
+							addEmojiToRecents((it as EmojiItem).emoji)
 							(context as? InputMethodService)?.currentInputConnection?.commitText((it as EmojiItem).emoji.character, 1)
 						}
 						emojiPopup?.dismiss()
@@ -197,6 +246,10 @@ class EmojiAdapter(private val context: Context) : RecyclerView.Adapter<Recycler
 				isOutsideTouchable = true
 			}
 		}
+		recentEmojis = loadRecents()
+		updateDisplayList(allEmojis, isFiltering = false)
+		emojiPopup?.contentView?.findViewById<EditText>(R.id.search_bar)?.setText("")
+
 
 		if (emojiPopup?.isShowing == true) {
 			emojiPopup?.dismiss()
