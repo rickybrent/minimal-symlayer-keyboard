@@ -126,6 +126,8 @@ val templates = hashMapOf(
 
 class InputMethodService : AndroidInputMethodService() {
 	private lateinit var vibrator: Vibrator
+	private var emojiAdapter: EmojiAdapter? = null
+
 	private val shift = Modifier()
 	private val alt = Modifier()
 	private val sym = SimpleModifier()
@@ -187,6 +189,15 @@ class InputMethodService : AndroidInputMethodService() {
 			updateFromPreferences()
 		}
 		updateFromPreferences()
+	}
+
+	private fun showEmojiPicker() {
+		if (emojiAdapter == null) {
+			emojiAdapter = EmojiAdapter(this)
+		}
+		window.window?.decorView?.rootView?.let { rootView ->
+			emojiAdapter?.show(rootView)
+		}
 	}
 
 	override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
@@ -605,6 +616,10 @@ class InputMethodService : AndroidInputMethodService() {
 	}
 
 	private fun simulateKeyTap(code: Int, original: KeyEvent) {
+		if (code == KeyEvent.KEYCODE_PICTSYMBOLS) {
+			showEmojiPicker()
+			return
+		}
 		val event = makeKeyEvent(original, code, original.metaState, original.action, original.source, original.deviceId)
 		if (sym.get()) {
 			onSymKey(event, true)
