@@ -646,11 +646,13 @@ class InputMethodService : AndroidInputMethodService() {
 		val metaState = emojiMeta.get()
 		if(force || symState != lastSym || altState != lastAlt || shiftState != lastShift || capsState != lastCaps || ctrlState != lastDotCtrl || metaState != lastEmojiMeta) {
 			if(sym.get()) {
-				if(shift.get()) {
+				if (shift.get()) {
 					showStatusIcon(R.drawable.symshift)
 				} else {
 					showStatusIcon(R.drawable.sym)
 				}
+			} else if(emojiMeta.get()) {
+				showStatusIcon(R.drawable.meta)
 			} else if(alt.get()) {
 				showStatusIcon(if (alt.isLocked()) R.drawable.altlock else R.drawable.alt)
 			} else if (dotCtrl.get()) {
@@ -659,8 +661,6 @@ class InputMethodService : AndroidInputMethodService() {
 				showStatusIcon(if(shift.isLocked()) R.drawable.shiftlock else R.drawable.shift)
 			} else if(caps.get()) {
 				showStatusIcon(if(caps.isLocked()) R.drawable.capslock else R.drawable.caps)
-			} else if(emojiMeta.get()) {
-				showStatusIcon(R.drawable.meta) 
 			} else {
 				hideStatusIcon()
 			}
