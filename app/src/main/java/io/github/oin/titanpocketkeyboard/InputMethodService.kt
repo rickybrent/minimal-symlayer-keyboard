@@ -210,6 +210,17 @@ class InputMethodService : AndroidInputMethodService() {
 		}
 	}
 
+	/**
+	 * Reset the shift/caps state when the InputView is closed and update the icons.
+	 * Prevents auto-caps's icon from appearing when no text input is active.
+	 */
+	override fun onFinishInputView(finishingInput: Boolean) {
+		super.onFinishInputView(finishingInput)
+		shift.reset()
+		caps.reset()
+		updateStatusIconIfNeeded()
+	}
+
 	override fun onUpdateSelection(
 		oldSelStart: Int,
 		oldSelEnd: Int,
