@@ -55,12 +55,14 @@ fun canUseSuggestions(editorInfo: EditorInfo): Boolean {
 fun makeKeyEvent(original: KeyEvent, code: Int, metaState: Int, action: Int, source: Int): KeyEvent {
 	return makeKeyEvent(original, code, metaState, action, source, KeyCharacterMap.VIRTUAL_KEYBOARD)
 }
+
 /**
  * @return A KeyEvent made from the given one, but with the given key code, meta state, action, source, and deviceId.
  */
 fun makeKeyEvent(original: KeyEvent, code: Int, metaState: Int, action: Int, source: Int, deviceId: Int): KeyEvent {
 	return KeyEvent(original.downTime, original.eventTime, action, code, original.repeatCount, metaState, deviceId, code, 0, source)
 }
+
 val templates = hashMapOf(
 	"fr" to hashMapOf(
 		KeyEvent.KEYCODE_A to arrayOf('`', '^', 'æ', MPSUBST_BYPASS),
@@ -126,7 +128,7 @@ val templates = hashMapOf(
 
 class InputMethodService : AndroidInputMethodService() {
 	private lateinit var vibrator: Vibrator
-	private var emojiAdapter: EmojiAdapter? = null
+	private var pickerManager: PickerManager? = null
 
 	private val shift = Modifier()
 	private val alt = Modifier()
@@ -134,7 +136,7 @@ class InputMethodService : AndroidInputMethodService() {
 	private val dotCtrl = TripleModifier(KeyEvent.KEYCODE_CTRL_RIGHT, KeyEvent.KEYCODE_PERIOD, KeyEvent.KEYCODE_VOICE_ASSIST)
 	private val emojiMeta = TripleModifier(KeyEvent.KEYCODE_META_LEFT, KeyEvent.KEYCODE_PICTSYMBOLS, KeyEvent.KEYCODE_0)
 	private val caps = Modifier()
-	
+
 	private var lastShift = false
 	private var lastAlt = false
 	private var lastSym = false
@@ -142,8 +144,16 @@ class InputMethodService : AndroidInputMethodService() {
 	private var lastEmojiMeta = false
 	private var lastCaps = false
 
-
 	private var autoCapitalize = false
+
+	enum class DeviceType(val source: Int) {
+		DEFAULT(InputDevice.SOURCE_KEYBOARD),
+		MP01(InputDevice.SOURCE_KEYBOARD)
+	}
+	var lastDeviceId = -1
+		private set
+	var deviceType = DeviceType.DEFAULT
+		private set
 
 	private val multipress = MultipressController(arrayOf(
 		templates["fr-ext"]!!,
@@ -192,12 +202,10 @@ class InputMethodService : AndroidInputMethodService() {
 	}
 
 	private fun showEmojiPicker() {
-		if (emojiAdapter == null) {
-			emojiAdapter = EmojiAdapter(this)
+		if (pickerManager == null) {
+			pickerManager = PickerManager(this, this)
 		}
-		window.window?.decorView?.rootView?.let { rootView ->
-			emojiAdapter?.show(rootView)
-		}
+		pickerManager?.show()
 	}
 
 	override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
@@ -244,6 +252,7 @@ class InputMethodService : AndroidInputMethodService() {
 	}
 
 	override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+		updateDeviceType(event)
 		// Update modifier states
 		if(!event.isLongPress && event.repeatCount == 0) {
 			when(event.keyCode) {
@@ -439,12 +448,22 @@ class InputMethodService : AndroidInputMethodService() {
 	}
 
 	/**
+	 * Update the active device type from a key event so we can reference it later.
+	 */
+	private fun updateDeviceType(event: KeyEvent) {
+		if (event.deviceId == lastDeviceId)
+			return
+		lastDeviceId = event.deviceId
+		val device = InputDevice.getDevice(event.deviceId)
+		if (device?.isVirtual == true)
+			return
+		deviceType = if (device?.name == "aw9523b-key") DeviceType.MP01 else DeviceType.DEFAULT
+	}
+
+	/**
 	 * Handle a key down event when the SYM modifier is enabled.
 	 */
-	private fun onSymKey(event: KeyEvent, pressed: Boolean): Boolean {
-		if (InputDevice.getDevice(event.deviceId)?.name == "aw9523b-key") {
-			return onMP01SymKey(event, pressed);
-		}
+	fun onSymKey(event: KeyEvent, pressed: Boolean): Boolean {
 
 		// The SPACE key is equivalent to hitting Shift
 		if(event.keyCode == KeyEvent.KEYCODE_SPACE) {
@@ -457,145 +476,25 @@ class InputMethodService : AndroidInputMethodService() {
 			return true
 		}
 
-		// Some keys simulate a D-Pad
-		val dpadKey = when(event.keyCode) {
-			// WASD to directional keys
-			KeyEvent.KEYCODE_W -> KeyEvent.KEYCODE_DPAD_UP
-			KeyEvent.KEYCODE_A -> KeyEvent.KEYCODE_DPAD_LEFT
-			KeyEvent.KEYCODE_S -> KeyEvent.KEYCODE_DPAD_DOWN
-			KeyEvent.KEYCODE_D -> KeyEvent.KEYCODE_DPAD_RIGHT
-			// HJKL to directional keys
-			KeyEvent.KEYCODE_H -> KeyEvent.KEYCODE_DPAD_LEFT
-			KeyEvent.KEYCODE_J -> KeyEvent.KEYCODE_DPAD_DOWN
-			KeyEvent.KEYCODE_K -> KeyEvent.KEYCODE_DPAD_UP
-			KeyEvent.KEYCODE_L -> KeyEvent.KEYCODE_DPAD_RIGHT
-			//
-			else -> 0
-		}
-		if(dpadKey != 0) {
-			sendDPadKey(dpadKey, event, pressed)
-			return true
-		}
+		val mapping = SymKeyMappings.getMapping(event.keyCode, deviceType) ?: return if (!event.isPrintingKey) {
+			if (pressed) super.onKeyDown(event.keyCode, event) else super.onKeyUp(event.keyCode, event)
+		} else true
 
-		// Some keys simulate keyboard keys
-		val kbdKey = when(event.keyCode) {
-			KeyEvent.KEYCODE_Y -> KeyEvent.KEYCODE_MOVE_HOME
-			KeyEvent.KEYCODE_U -> KeyEvent.KEYCODE_PAGE_DOWN
-			KeyEvent.KEYCODE_I -> KeyEvent.KEYCODE_PAGE_UP
-			KeyEvent.KEYCODE_O -> KeyEvent.KEYCODE_MOVE_END
-			KeyEvent.KEYCODE_P -> KeyEvent.KEYCODE_ESCAPE
-			KeyEvent.KEYCODE_X -> KeyEvent.KEYCODE_CUT
-			KeyEvent.KEYCODE_C -> KeyEvent.KEYCODE_COPY
-			KeyEvent.KEYCODE_V -> KeyEvent.KEYCODE_PASTE
-			KeyEvent.KEYCODE_Z -> KeyEvent.KEYCODE_TAB
-			KeyEvent.KEYCODE_Q -> KeyEvent.KEYCODE_TAB
-			else -> 0
-		}
-		if(kbdKey != 0) {
-			sendKey(kbdKey, event, pressed)
-			return true
-		}
-
-		// Some keys type text
-		if(event.repeatCount == 0 && !event.isLongPress && pressed) {
-			val str = when(event.keyCode) {
-				KeyEvent.KEYCODE_B -> "$"
-				KeyEvent.KEYCODE_N -> "="
-				KeyEvent.KEYCODE_E -> "€"
-				KeyEvent.KEYCODE_M -> "%"
-				else -> null
+		if (pressed && event.repeatCount == 0 && !event.isLongPress) {
+			when (val action = mapping.action) {
+				is SendKey -> sendKey(action.keyCode, event, true)
+				is SendChar -> {
+					val char = if (shift.get() && action.shiftedCharacter != null) action.shiftedCharacter else action.character
+					sendCharacter(char)
+				}
 			}
-			if(str != null) {
-				sendCharacter(str)
+		} else if (!pressed) {
+			when (val action = mapping.action) {
+				is SendKey -> sendKey(action.keyCode, event, false)
+				is SendChar -> { /* No action on key up for characters */ }
 			}
 		}
-
-		// Other non-printing keys pass through
-		if(!event.isPrintingKey) {
-			return if(pressed) {
-				super.onKeyDown(event.keyCode, event)
-			} else {
-				super.onKeyUp(event.keyCode, event)
-			}
-		}
-
-		// The rest is ignored
-
 		return true
-	}
-
-	/**
-	 * MP01 bindings to handle a key down event when the SYM modifier is enabled.
-	 */
-	private fun onMP01SymKey(event: KeyEvent, pressed: Boolean): Boolean {
-		// Some keys simulate a D-Pad
-		val dpadKey = when(event.keyCode) {
-			// WASD to directional keys
-			KeyEvent.KEYCODE_W -> KeyEvent.KEYCODE_DPAD_UP
-			KeyEvent.KEYCODE_A -> KeyEvent.KEYCODE_DPAD_LEFT
-			KeyEvent.KEYCODE_S -> KeyEvent.KEYCODE_DPAD_DOWN
-			KeyEvent.KEYCODE_D -> KeyEvent.KEYCODE_DPAD_RIGHT
-			else -> 0
-		}
-		if(dpadKey != 0) {
-			sendDPadKey(dpadKey, event, pressed)
-			return true
-		}
-
-		// Some keys simulate keyboard keys
-		val kbdKey = when(event.keyCode) {
-			KeyEvent.KEYCODE_Q -> KeyEvent.KEYCODE_PAGE_UP
-			KeyEvent.KEYCODE_E -> KeyEvent.KEYCODE_PAGE_DOWN
-			KeyEvent.KEYCODE_R -> KeyEvent.KEYCODE_MOVE_HOME
-			KeyEvent.KEYCODE_F -> KeyEvent.KEYCODE_MOVE_END
-			KeyEvent.KEYCODE_Z -> KeyEvent.KEYCODE_TAB
-			KeyEvent.KEYCODE_X -> KeyEvent.KEYCODE_CUT //CUT
-			KeyEvent.KEYCODE_C -> KeyEvent.KEYCODE_COPY // COPY
-			KeyEvent.KEYCODE_V -> KeyEvent.KEYCODE_PASTE // PASTE
-			else -> 0
-		}
-		if(kbdKey != 0) {
-			sendKey(kbdKey, event, pressed)
-			return true
-		}
-
-		// Some keys type text
-		if(event.repeatCount == 0 && !event.isLongPress && pressed) {
-			val str = when(event.keyCode) {
-				KeyEvent.KEYCODE_T -> "~"
-				KeyEvent.KEYCODE_G -> "`"
-				KeyEvent.KEYCODE_Y -> "["
-				KeyEvent.KEYCODE_U -> "]"
-				KeyEvent.KEYCODE_I -> "("
-				KeyEvent.KEYCODE_O -> ")"
-				KeyEvent.KEYCODE_P -> if (shift.get()) "£" else "€"
-				KeyEvent.KEYCODE_H -> "{"
-				KeyEvent.KEYCODE_J -> "}"
-				KeyEvent.KEYCODE_K -> "^"
-				KeyEvent.KEYCODE_L -> "|"
-				KeyEvent.KEYCODE_B -> "\\"
-				KeyEvent.KEYCODE_N -> "/"
-				KeyEvent.KEYCODE_M -> "<"
-				KeyEvent.KEYCODE_PERIOD -> ">"
-				else -> null
-			}
-			if(str != null) {
-				sendCharacter(str)
-				return true
-			}
-		}
-
-		// Other non-printing keys pass through
-		if(!event.isPrintingKey) {
-			return if(pressed) {
-				super.onKeyDown(event.keyCode, event)
-			} else {
-				super.onKeyUp(event.keyCode, event)
-			}
-		}
-
-		// The rest is ignored
-		return false
 	}
 
 	/**
@@ -612,7 +511,7 @@ class InputMethodService : AndroidInputMethodService() {
 	 * Send a key press or release.
 	 */
 	private fun sendKey(code: Int, original: KeyEvent, pressed: Boolean) {
-		currentInputConnection?.sendKeyEvent(makeKeyEvent(original, code, enhancedMetaState(original), if(pressed) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, InputDevice.SOURCE_DPAD))
+		currentInputConnection?.sendKeyEvent(makeKeyEvent(original, code, enhancedMetaState(original), if(pressed) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, InputDevice.SOURCE_KEYBOARD))
 	}
 
 	/**
