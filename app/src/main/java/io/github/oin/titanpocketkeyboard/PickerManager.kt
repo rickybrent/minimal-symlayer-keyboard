@@ -11,6 +11,7 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.PopupWindow
+import android.widget.TextView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -30,6 +31,8 @@ class PickerManager(private val context: Context, private val service: InputMeth
     private lateinit var searchBar: EditText
     private lateinit var symButton: ImageButton
     private lateinit var clipboardButton: ImageButton
+    private lateinit var emptyClipboardMessage: TextView
+    private lateinit var recyclerView: RecyclerView
 
     enum class ViewType {
         EMOJI, SYMBOL, CLIPBOARD
@@ -56,10 +59,11 @@ class PickerManager(private val context: Context, private val service: InputMeth
         if (keyCode == KeyEvent.KEYCODE_ENTER && searchBar.hasFocus()) {
             if (event.action == KeyEvent.ACTION_DOWN) return@OnKeyListener true // Consume down event
             if (event.action == KeyEvent.ACTION_UP) {
-                if (currentView == ViewType.EMOJI) { // This will also dismiss the popup
-                    getEmojiAdapter().selectFirstEmoji()
-                } else if (currentView == ViewType.CLIPBOARD) { // Also will dismiss the popup.
-                    getClipboardAdapter().selectFirstItem()
+                // This will insert text or an emoji and dismiss the popup.
+                when (currentView) {
+                    ViewType.EMOJI -> getEmojiAdapter().selectFirstEmoji()
+                    ViewType.CLIPBOARD -> getClipboardAdapter().selectFirstItem()
+                    else -> {}
                 }
                 return@OnKeyListener true
             }
@@ -122,6 +126,12 @@ class PickerManager(private val context: Context, private val service: InputMeth
         val backButton = containerView.findViewById<ImageButton>(R.id.back_button)
         symButton = containerView.findViewById(R.id.sym_button)
         clipboardButton = containerView.findViewById(R.id.clipboard_button)
+        emptyClipboardMessage = containerView.findViewById(R.id.empty_clipboard_message)
+
+        // Create and add the RecyclerView here
+        recyclerView = RecyclerView(context)
+        contentArea.addView(recyclerView)
+
 
         backButton.setOnClickListener { popupWindow?.dismiss() }
         symButton.setOnClickListener { switchToView(ViewType.SYMBOL) }
@@ -145,15 +155,16 @@ class PickerManager(private val context: Context, private val service: InputMeth
 
     private fun switchToView(viewType: ViewType) {
         currentView = viewType
-        contentArea.removeAllViews()
-        val recyclerView = RecyclerView(context)
-        contentArea.addView(recyclerView)
+
+        recyclerView.visibility = View.GONE
+        emptyClipboardMessage.visibility = View.GONE
 
         // Remove the searchBar watcher before switching
         activeTextWatcher?.let { searchBar.removeTextChangedListener(it) }
 
         when (viewType) {
             ViewType.EMOJI -> {
+                recyclerView.visibility = View.VISIBLE
                 searchBar.visibility = View.VISIBLE
                 symButton.visibility = View.VISIBLE
                 clipboardButton.visibility = View.VISIBLE
@@ -175,6 +186,7 @@ class PickerManager(private val context: Context, private val service: InputMeth
                 searchBar.addTextChangedListener(activeTextWatcher)
             }
             ViewType.SYMBOL -> {
+                recyclerView.visibility = View.VISIBLE
                 searchBar.visibility = View.GONE
                 symButton.visibility = View.GONE
                 clipboardButton.visibility = View.VISIBLE
@@ -187,8 +199,15 @@ class PickerManager(private val context: Context, private val service: InputMeth
                 searchBar.visibility = View.VISIBLE
                 symButton.visibility = View.VISIBLE
                 clipboardButton.visibility = View.GONE
+                val history = ClipboardHistoryManager.getHistory()
+                if (history.isEmpty()) {
+                    emptyClipboardMessage.visibility = View.VISIBLE
+                } else {
+                    recyclerView.visibility = View.VISIBLE
+                }
+
                 val adapter = getClipboardAdapter()
-                adapter.setHistory(ClipboardHistoryManager.getHistory())
+                adapter.setHistory(history)
                 recyclerView.layoutManager = LinearLayoutManager(context)
                 recyclerView.adapter = adapter
                 searchBar.requestFocus()

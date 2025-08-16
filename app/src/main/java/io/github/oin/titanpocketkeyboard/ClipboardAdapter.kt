@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Filter
 import android.widget.Filterable
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
@@ -12,30 +13,46 @@ class ClipboardAdapter(
     private val onItemSelected: (String) -> Unit
 ) : RecyclerView.Adapter<ClipboardAdapter.ClipboardViewHolder>(), Filterable {
 
-    private var history: List<String> = listOf()
-    private var filteredHistory: List<String> = listOf()
+    private var fullHistory: List<Clipping> = listOf()
+    private var filteredHistory: List<Clipping> = listOf()
 
-    fun setHistory(history: List<String>) {
-        this.history = history
+    fun setHistory(history: List<Clipping>) {
+        this.fullHistory = history
         this.filteredHistory = history
         notifyDataSetChanged()
     }
 
     class ClipboardViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val textView: TextView = view.findViewById(android.R.id.text1)
+        val textView: TextView = view.findViewById(R.id.clipboard_text)
+        val pinIcon: ImageView = view.findViewById(R.id.pin_icon)
+        val clearIcon: ImageView = view.findViewById(R.id.clear_icon)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ClipboardViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(android.R.layout.simple_list_item_1, parent, false)
+            .inflate(R.layout.picker_item_clipping, parent, false)
         return ClipboardViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ClipboardViewHolder, position: Int) {
         val item = filteredHistory[position]
-        holder.textView.text = item
+        holder.textView.text = item.text
+        holder.pinIcon.setImageResource(
+            if (item.isPinned) R.drawable.ic_pin_filled else R.drawable.ic_pin_outline
+        )
+
         holder.itemView.setOnClickListener {
-            onItemSelected(item)
+            onItemSelected(item.text)
+        }
+
+        holder.pinIcon.setOnClickListener {
+            ClipboardHistoryManager.togglePin(item)
+            setHistory(ClipboardHistoryManager.getHistory()) // Refresh the list
+        }
+
+        holder.clearIcon.setOnClickListener {
+            ClipboardHistoryManager.removeItem(item)
+            setHistory(ClipboardHistoryManager.getHistory()) // Refresh the list
         }
     }
 
@@ -43,7 +60,7 @@ class ClipboardAdapter(
 
     fun selectFirstItem() {
         if (filteredHistory.isNotEmpty()) {
-            onItemSelected(filteredHistory[0])
+            onItemSelected(filteredHistory[0].text)
         }
     }
     override fun getFilter(): Filter {
@@ -52,10 +69,10 @@ class ClipboardAdapter(
                 val results = FilterResults()
                 val query = constraint?.toString()?.lowercase()
                 results.values = if (query.isNullOrEmpty()) {
-                    history
+                    fullHistory
                 } else {
-                    history.filter {
-                        it.lowercase().contains(query)
+                    fullHistory.filter {
+                        it.text.lowercase().contains(query)
                     }
                 }
                 return results
@@ -63,7 +80,7 @@ class ClipboardAdapter(
 
             @Suppress("UNCHECKED_CAST")
             override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
-                filteredHistory = results?.values as? List<String> ?: emptyList()
+                filteredHistory = results?.values as? List<Clipping> ?: emptyList()
                 notifyDataSetChanged()
             }
         }
