@@ -12,8 +12,8 @@ data class SendChar(val character: String, val shiftedCharacter: String? = null)
 data class KeyMapping(val display: String, val action: SymAction)
 
 object SymKeyMappings {
-    // --- DEFAULT MAPPINGS ---
-    private val defaultMap: Map<Int, KeyMapping> = mapOf(
+    // --- UNIHERTZ TITAN MAPPINGS ---
+    private val titanMap: Map<Int, KeyMapping> = mapOf(
         KeyEvent.KEYCODE_W to KeyMapping("↑", SendKey(KeyEvent.KEYCODE_DPAD_UP)),
         KeyEvent.KEYCODE_A to KeyMapping("←", SendKey(KeyEvent.KEYCODE_DPAD_LEFT)),
         KeyEvent.KEYCODE_S to KeyMapping("↓", SendKey(KeyEvent.KEYCODE_DPAD_DOWN)),
@@ -38,7 +38,7 @@ object SymKeyMappings {
         KeyEvent.KEYCODE_M to KeyMapping("%", SendChar("%"))
     )
 
-    // --- MP01 MAPPINGS ---
+    // --- MINIMAL PHONE MP01 MAPPINGS ---
     private val mp01Map: Map<Int, KeyMapping> = mapOf(
         KeyEvent.KEYCODE_W to KeyMapping("↑", SendKey(KeyEvent.KEYCODE_DPAD_UP)),
         KeyEvent.KEYCODE_A to KeyMapping("←", SendKey(KeyEvent.KEYCODE_DPAD_LEFT)),
@@ -72,7 +72,7 @@ object SymKeyMappings {
     fun getMapping(keyCode: Int, deviceType: InputMethodService.DeviceType): KeyMapping? {
         return when (deviceType) {
             InputMethodService.DeviceType.MP01 -> mp01Map[keyCode]
-            InputMethodService.DeviceType.DEFAULT -> defaultMap[keyCode]
+            InputMethodService.DeviceType.TITAN -> titanMap[keyCode]
         }
     }
 

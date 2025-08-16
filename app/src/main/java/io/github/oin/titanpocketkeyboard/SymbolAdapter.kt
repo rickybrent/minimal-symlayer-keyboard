@@ -7,28 +7,49 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-data class SymbolKey(val keyCode: Int)
 
 class SymbolAdapter(
     private val service: InputMethodService,
     private val onKeyPress: (Int) -> Unit
 ) : RecyclerView.Adapter<SymbolAdapter.SymbolViewHolder>() {
-    // TODO: The titan will need a different layout.
-    private val symbolKeys: List<SymbolKey> = listOf(
-        SymbolKey(KeyEvent.KEYCODE_Q), SymbolKey(KeyEvent.KEYCODE_W), SymbolKey(KeyEvent.KEYCODE_E),
-        SymbolKey(KeyEvent.KEYCODE_R), SymbolKey(KeyEvent.KEYCODE_T), SymbolKey(KeyEvent.KEYCODE_Y),
-        SymbolKey(KeyEvent.KEYCODE_U), SymbolKey(KeyEvent.KEYCODE_I), SymbolKey(KeyEvent.KEYCODE_O),
-        SymbolKey(KeyEvent.KEYCODE_P),
 
-        SymbolKey(KeyEvent.KEYCODE_A), SymbolKey(KeyEvent.KEYCODE_S), SymbolKey(KeyEvent.KEYCODE_D),
-        SymbolKey(KeyEvent.KEYCODE_F), SymbolKey(KeyEvent.KEYCODE_G), SymbolKey(KeyEvent.KEYCODE_H),
-        SymbolKey(KeyEvent.KEYCODE_J), SymbolKey(KeyEvent.KEYCODE_K), SymbolKey(KeyEvent.KEYCODE_L),
-        SymbolKey(KeyEvent.KEYCODE_ENTER),
+    private val symbolKeys: Map<InputMethodService.DeviceType, List<Int>> = mapOf(
+        InputMethodService.DeviceType.TITAN to listOf(
+            KeyEvent.KEYCODE_Q, KeyEvent.KEYCODE_W, KeyEvent.KEYCODE_E,
+            KeyEvent.KEYCODE_R, KeyEvent.KEYCODE_T, KeyEvent.KEYCODE_Y,
+            KeyEvent.KEYCODE_U, KeyEvent.KEYCODE_I, KeyEvent.KEYCODE_O,
+            KeyEvent.KEYCODE_P,
 
-        SymbolKey(KeyEvent.KEYCODE_SHIFT_LEFT), SymbolKey(KeyEvent.KEYCODE_Z), SymbolKey(KeyEvent.KEYCODE_X),
-        SymbolKey(KeyEvent.KEYCODE_C), SymbolKey(KeyEvent.KEYCODE_V), SymbolKey(KeyEvent.KEYCODE_B),
-        SymbolKey(KeyEvent.KEYCODE_N), SymbolKey(KeyEvent.KEYCODE_M), SymbolKey(KeyEvent.KEYCODE_PERIOD),
-        SymbolKey(KeyEvent.KEYCODE_DEL)
+            KeyEvent.KEYCODE_A, KeyEvent.KEYCODE_S, KeyEvent.KEYCODE_D,
+            KeyEvent.KEYCODE_F, KeyEvent.KEYCODE_G, KeyEvent.KEYCODE_H,
+            KeyEvent.KEYCODE_J, KeyEvent.KEYCODE_K, KeyEvent.KEYCODE_L,
+            KeyEvent.KEYCODE_DEL,
+
+            KeyEvent.KEYCODE_Z, KeyEvent.KEYCODE_X, KeyEvent.KEYCODE_C,
+            KeyEvent.KEYCODE_V, KeyEvent.KEYCODE_SPACE, KeyEvent.KEYCODE_SPACE,
+            KeyEvent.KEYCODE_B, KeyEvent.KEYCODE_N, KeyEvent.KEYCODE_M,
+            KeyEvent.KEYCODE_ENTER
+        ),
+        InputMethodService.DeviceType.MP01 to listOf(
+            KeyEvent.KEYCODE_Q, KeyEvent.KEYCODE_W, KeyEvent.KEYCODE_E,
+            KeyEvent.KEYCODE_R, KeyEvent.KEYCODE_T, KeyEvent.KEYCODE_Y,
+            KeyEvent.KEYCODE_U, KeyEvent.KEYCODE_I, KeyEvent.KEYCODE_O,
+            KeyEvent.KEYCODE_P,
+
+            KeyEvent.KEYCODE_A, KeyEvent.KEYCODE_S, KeyEvent.KEYCODE_D,
+            KeyEvent.KEYCODE_F, KeyEvent.KEYCODE_G, KeyEvent.KEYCODE_H,
+            KeyEvent.KEYCODE_J, KeyEvent.KEYCODE_K, KeyEvent.KEYCODE_L,
+            KeyEvent.KEYCODE_DEL,
+
+            KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_Z, KeyEvent.KEYCODE_X,
+            KeyEvent.KEYCODE_C, KeyEvent.KEYCODE_V, KeyEvent.KEYCODE_B,
+            KeyEvent.KEYCODE_N, KeyEvent.KEYCODE_M, KeyEvent.KEYCODE_PERIOD,
+            KeyEvent.KEYCODE_ENTER,
+
+            0, KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_PICTSYMBOLS,
+            KeyEvent.KEYCODE_SPACE, KeyEvent.KEYCODE_SPACE, KeyEvent.KEYCODE_SPACE,
+            KeyEvent.KEYCODE_SPACE, KeyEvent.KEYCODE_SYM, KeyEvent.KEYCODE_SHIFT_RIGHT
+        )
     )
 
     class SymbolViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -41,13 +62,18 @@ class SymbolAdapter(
     }
 
     override fun onBindViewHolder(holder: SymbolViewHolder, position: Int) {
-        val key = symbolKeys[position]
+        val keyCode = symbolKeys[service.deviceType]?.get(position) ?: 0
+        if (keyCode == 0) {
+            holder.itemView.alpha = 0f // Not a key, a placeholder.
+            return
+        }
+        holder.itemView.alpha = 1f
         // Use the centralized mapping logic to get the display text
-        holder.textView.text = SymKeyMappings.getSymKeyDisplay(key.keyCode, service.deviceType)
+        holder.textView.text = SymKeyMappings.getSymKeyDisplay(keyCode, service.deviceType)
         holder.itemView.setOnClickListener {
-            onKeyPress(key.keyCode)
+            onKeyPress(keyCode)
         }
     }
 
-    override fun getItemCount(): Int = symbolKeys.size
+    override fun getItemCount(): Int = symbolKeys[service.deviceType]?.size ?:0
 }

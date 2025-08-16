@@ -147,12 +147,12 @@ class InputMethodService : AndroidInputMethodService() {
 	private var autoCapitalize = false
 
 	enum class DeviceType(val source: Int) {
-		DEFAULT(InputDevice.SOURCE_KEYBOARD),
+		TITAN(InputDevice.SOURCE_KEYBOARD),
 		MP01(InputDevice.SOURCE_KEYBOARD)
 	}
 	var lastDeviceId = -1
 		private set
-	var deviceType = DeviceType.DEFAULT
+	var deviceType = DeviceType.TITAN
 		private set
 
 	private val multipress = MultipressController(arrayOf(
@@ -469,7 +469,7 @@ class InputMethodService : AndroidInputMethodService() {
 		val device = InputDevice.getDevice(event.deviceId)
 		if (device?.isVirtual == true)
 			return
-		deviceType = if (device?.name == "aw9523b-key") DeviceType.MP01 else DeviceType.DEFAULT
+		deviceType = if (device?.name == "aw9523b-key") DeviceType.MP01 else DeviceType.TITAN
 	}
 
 	/**
