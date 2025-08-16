@@ -27,7 +27,12 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:hint="Search emojis..." />
-
+        <ImageButton
+            android:id="@+id/clipboard_button"
+             android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:contentDescription="Clipboard History Search"
+            android:background="@drawable/ic_clipboard_search_btn" />
         <ImageButton
             android:id="@+id/sym_button"
             android:layout_width="44dp"

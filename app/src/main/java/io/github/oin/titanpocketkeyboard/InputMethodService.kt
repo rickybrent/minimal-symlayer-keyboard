@@ -193,9 +193,10 @@ class InputMethodService : AndroidInputMethodService() {
 	override fun onCreate() {
 		super.onCreate()
 		vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+		ClipboardHistoryManager.initialize(this)
 
 		val preferences = PreferenceManager.getDefaultSharedPreferences(this)
-		preferences.registerOnSharedPreferenceChangeListener { preferences, key ->
+		preferences.registerOnSharedPreferenceChangeListener { _, _ ->
 			updateFromPreferences()
 		}
 		updateFromPreferences()
@@ -207,6 +208,13 @@ class InputMethodService : AndroidInputMethodService() {
 		}
 		pickerManager?.show()
 	}
+
+    private fun showClipboardHistory() {
+        if (pickerManager == null) {
+            pickerManager = PickerManager(this, this)
+        }
+        pickerManager?.show(PickerManager.ViewType.CLIPBOARD)
+    }
 
 	override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
 		super.onStartInput(attribute, restarting)
@@ -375,6 +383,10 @@ class InputMethodService : AndroidInputMethodService() {
 		}
 		// Prioritizing ctrl/meta, so commenting this out:
 		// if(sym.get()) { return onSymKey(event, true) }
+		// Handle emojiMeta + key shortcuts.
+		if (emojiMeta.get() && onEmojiMetaShotcut(event)) {
+			return true
+		}
 
 		// If either modkey is active, send the key as a keypress.
 		if (dotCtrl.getModKey() != 0 || emojiMeta.getModKey() != 0) {
@@ -495,6 +507,17 @@ class InputMethodService : AndroidInputMethodService() {
 			}
 		}
 		return true
+	}
+
+	/**
+	 * Handle keyboard shortcuts where emojiMeta is held. (TODO: Add search+key shortcuts)
+	 */
+	private fun onEmojiMetaShotcut(event: KeyEvent): Boolean {
+		if (event.keyCode == KeyEvent.KEYCODE_V) {
+			showClipboardHistory()
+			return true
+		}
+		return false
 	}
 
 	/**

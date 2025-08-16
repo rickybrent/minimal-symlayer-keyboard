@@ -12,6 +12,7 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.PopupWindow
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 class PickerManager(private val context: Context, private val service: InputMethodService) {
@@ -19,41 +20,47 @@ class PickerManager(private val context: Context, private val service: InputMeth
     private var popupWindow: PopupWindow? = null
     private var emojiAdapter: EmojiAdapter? = null
     private var symbolAdapter: SymbolAdapter? = null
+    private var clipboardAdapter: ClipboardAdapter? = null
     private var popupShownTime: Long = 0
+    private var initialPressComplete = false
+    private var activeTextWatcher: TextWatcher? = null
+    private var currentView: ViewType = ViewType.EMOJI
 
     private lateinit var contentArea: FrameLayout
     private lateinit var searchBar: EditText
     private lateinit var symButton: ImageButton
+    private lateinit var clipboardButton: ImageButton
 
     enum class ViewType {
-        EMOJI, SYMBOL
+        EMOJI, SYMBOL, CLIPBOARD
     }
 
     // Define the shared key listener as a property of the class
     private val keyListener = View.OnKeyListener { _, keyCode, event ->
-        // Delay to prevent accidental closing immediately after opening
-        if (System.currentTimeMillis() - popupShownTime < 500) {
-            return@OnKeyListener true // Consume the event
+        if (event.action == KeyEvent.ACTION_UP && keyCode == MP01_KEYCODE_EMOJI_PICKER) {
+            // Prevent the key up event from the opening hotkey from immediately closing the popup.
+            if (!initialPressComplete && System.currentTimeMillis() - popupShownTime < 1000) {
+                initialPressComplete = true
+                return@OnKeyListener true // Consume the event
+            }
+            popupWindow?.dismiss()
+            return@OnKeyListener true
         }
 
-        if (event.action == KeyEvent.ACTION_UP) {
-            when (keyCode) {
-                KeyEvent.KEYCODE_SYM -> {
-                    switchToView(ViewType.SYMBOL)
-                    return@OnKeyListener true
-                }
-                MP01_KEYCODE_EMOJI_PICKER -> {
-                    popupWindow?.dismiss()
-                    return@OnKeyListener true
-                }
-            }
+        if (event.action == KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_SYM) {
+            switchToView(ViewType.SYMBOL)
+            return@OnKeyListener true
         }
 
         // Handle 'Enter' key only if the search bar has focus
         if (keyCode == KeyEvent.KEYCODE_ENTER && searchBar.hasFocus()) {
             if (event.action == KeyEvent.ACTION_DOWN) return@OnKeyListener true // Consume down event
             if (event.action == KeyEvent.ACTION_UP) {
-                getEmojiAdapter().selectFirstEmoji() // This will also dismiss the popup
+                if (currentView == ViewType.EMOJI) { // This will also dismiss the popup
+                    getEmojiAdapter().selectFirstEmoji()
+                } else if (currentView == ViewType.CLIPBOARD) { // Also will dismiss the popup.
+                    getClipboardAdapter().selectFirstItem()
+                }
                 return@OnKeyListener true
             }
         }
@@ -80,7 +87,18 @@ class PickerManager(private val context: Context, private val service: InputMeth
         return symbolAdapter!!
     }
 
-    fun show() {
+    private fun getClipboardAdapter(): ClipboardAdapter {
+        if (clipboardAdapter == null) {
+            clipboardAdapter = ClipboardAdapter { text ->
+                service.currentInputConnection?.commitText(text, 1)
+                popupWindow?.dismiss()
+            }
+        }
+        return clipboardAdapter!!
+    }
+
+
+    fun show(startingView: ViewType = ViewType.EMOJI) {
         if (popupWindow == null) {
             setupPopupWindow()
         }
@@ -88,8 +106,9 @@ class PickerManager(private val context: Context, private val service: InputMeth
         if (popupWindow?.isShowing == true) {
             popupWindow?.dismiss()
         } else {
+            initialPressComplete = false
             popupShownTime = System.currentTimeMillis()
-            switchToView(ViewType.EMOJI) // Default to emoji view
+            switchToView(startingView) // Default to emoji view
             popupWindow?.showAtLocation(service.window.window!!.decorView, Gravity.BOTTOM, 0, 0)
         }
     }
@@ -102,18 +121,11 @@ class PickerManager(private val context: Context, private val service: InputMeth
         searchBar = containerView.findViewById(R.id.search_bar)
         val backButton = containerView.findViewById<ImageButton>(R.id.back_button)
         symButton = containerView.findViewById(R.id.sym_button)
+        clipboardButton = containerView.findViewById(R.id.clipboard_button)
 
         backButton.setOnClickListener { popupWindow?.dismiss() }
         symButton.setOnClickListener { switchToView(ViewType.SYMBOL) }
-
-        val textWatcher = object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                getEmojiAdapter().filter.filter(s)
-            }
-            override fun afterTextChanged(s: Editable?) {}
-        }
-        searchBar.addTextChangedListener(textWatcher)
+        clipboardButton.setOnClickListener { switchToView(ViewType.CLIPBOARD) }
 
         // Attach the same listener to both views
         containerView.isFocusableInTouchMode = true
@@ -132,28 +144,64 @@ class PickerManager(private val context: Context, private val service: InputMeth
     }
 
     private fun switchToView(viewType: ViewType) {
+        currentView = viewType
         contentArea.removeAllViews()
         val recyclerView = RecyclerView(context)
         contentArea.addView(recyclerView)
 
-        if (viewType == ViewType.EMOJI) {
-            searchBar.visibility = View.VISIBLE
-            symButton.visibility = View.VISIBLE
-            val adapter = getEmojiAdapter()
-            adapter.refresh()
-            val layoutManager = GridLayoutManager(context, EmojiAdapter.GRID_SPAN_COUNT)
-            layoutManager.spanSizeLookup = adapter.getSpanSizeLookup()
-            recyclerView.layoutManager = layoutManager
-            recyclerView.adapter = adapter
-            searchBar.requestFocus()
-        } else { // SYMBOL
-            searchBar.visibility = View.GONE
-            symButton.visibility = View.GONE
-            val adapter = getSymbolAdapter()
-            recyclerView.layoutManager = GridLayoutManager(context, 10)
-            recyclerView.adapter = adapter
-            // Request focus on the container so it can receive key events
-            popupWindow?.contentView?.requestFocus()
+        // Remove the searchBar watcher before switching
+        activeTextWatcher?.let { searchBar.removeTextChangedListener(it) }
+
+        when (viewType) {
+            ViewType.EMOJI -> {
+                searchBar.visibility = View.VISIBLE
+                symButton.visibility = View.VISIBLE
+                clipboardButton.visibility = View.VISIBLE
+                val adapter = getEmojiAdapter()
+                adapter.refresh()
+                val layoutManager = GridLayoutManager(context, EmojiAdapter.GRID_SPAN_COUNT)
+                layoutManager.spanSizeLookup = adapter.getSpanSizeLookup()
+                recyclerView.layoutManager = layoutManager
+                recyclerView.adapter = adapter
+                searchBar.requestFocus()
+                searchBar.hint = "Search emoji"
+                activeTextWatcher = object : TextWatcher {
+                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                        adapter.filter.filter(s)
+                    }
+                    override fun afterTextChanged(s: Editable?) {}
+                }
+                searchBar.addTextChangedListener(activeTextWatcher)
+            }
+            ViewType.SYMBOL -> {
+                searchBar.visibility = View.GONE
+                symButton.visibility = View.GONE
+                clipboardButton.visibility = View.VISIBLE
+                val adapter = getSymbolAdapter()
+                recyclerView.layoutManager = GridLayoutManager(context, 10)
+                recyclerView.adapter = adapter
+                popupWindow?.contentView?.requestFocus()
+            }
+            ViewType.CLIPBOARD -> {
+                searchBar.visibility = View.VISIBLE
+                symButton.visibility = View.VISIBLE
+                clipboardButton.visibility = View.GONE
+                val adapter = getClipboardAdapter()
+                adapter.setHistory(ClipboardHistoryManager.getHistory())
+                recyclerView.layoutManager = LinearLayoutManager(context)
+                recyclerView.adapter = adapter
+                searchBar.requestFocus()
+                searchBar.hint = "Search clipboard"
+                activeTextWatcher = object : TextWatcher {
+                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                        adapter.filter.filter(s)
+                    }
+                    override fun afterTextChanged(s: Editable?) {}
+                }
+                searchBar.addTextChangedListener(activeTextWatcher)
+            }
         }
     }
 
