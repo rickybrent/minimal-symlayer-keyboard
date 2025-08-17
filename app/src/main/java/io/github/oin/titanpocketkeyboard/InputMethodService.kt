@@ -547,7 +547,10 @@ class InputMethodService : AndroidInputMethodService() {
 	 * Send a key press or release.
 	 */
 	private fun sendKey(code: Int, original: KeyEvent, pressed: Boolean) {
-		currentInputConnection?.sendKeyEvent(makeKeyEvent(original, code, enhancedMetaState(original), if(pressed) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, InputDevice.SOURCE_KEYBOARD))
+		val newState = enhancedMetaState(original)
+		forceMatchMetaState(original, newState, pressed)
+		currentInputConnection?.sendKeyEvent(makeKeyEvent(original, code, newState, if(pressed) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, InputDevice.SOURCE_KEYBOARD))
+		forceMatchMetaState(original, newState, false)
 	}
 
 	/**
@@ -583,7 +586,7 @@ class InputMethodService : AndroidInputMethodService() {
 		val origMeta = original.metaState
 		for ((metaOn, metaKey) in forceModifierPairs) {
 			if (origMeta and metaOn == 0 && enhanced and metaOn != 0) {
-				sendKey(metaKey, original, pressed)
+				currentInputConnection?.sendKeyEvent(makeKeyEvent(original, metaKey, enhanced, if(pressed) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, InputDevice.SOURCE_KEYBOARD))
 			}
 		}
 	}
