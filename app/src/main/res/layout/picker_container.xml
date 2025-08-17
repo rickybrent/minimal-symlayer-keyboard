@@ -14,10 +14,19 @@
         android:padding="8dp">
 
         <ImageButton
-            android:id="@+id/back_button"
+            android:id="@+id/emoji_close_button"
             android:layout_width="44dp"
             android:layout_height="44dp"
-            android:contentDescription="Back"
+            android:contentDescription="Close Emoji View"
+            android:padding="8dp"
+            android:background="@drawable/ic_emoji_btn_down"
+            android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/emoji_view_button"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:contentDescription="Emoji Search"
             android:padding="8dp"
             android:background="@drawable/ic_emoji_btn_left" />
 
@@ -27,6 +36,16 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:hint="Search emojis..." />
+        <TextView
+            android:id="@+id/picker_title"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="Sym Layer View"
+            android:visibility="gone"
+            />
         <ImageButton
             android:id="@+id/clipboard_button"
              android:layout_width="28dp"
@@ -37,10 +56,19 @@
             android:id="@+id/sym_button"
             android:layout_width="44dp"
             android:layout_height="44dp"
-            android:contentDescription="Symbols"
+            android:contentDescription="Symbols View"
             android:padding="8dp"
             android:scaleType="fitCenter"
             android:background="@drawable/ic_sym_btn_right" />
+        <ImageButton
+            android:id="@+id/sym_close_button"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:contentDescription="Close Symbols View"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:background="@drawable/ic_sym_btn_down"
+            android:visibility="gone" />
     </LinearLayout>
 
     <FrameLayout

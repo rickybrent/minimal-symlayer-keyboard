@@ -28,8 +28,12 @@ class PickerManager(private val context: Context, private val service: InputMeth
     private var currentView: ViewType = ViewType.EMOJI
 
     private lateinit var contentArea: FrameLayout
+    private lateinit var titleArea: TextView
     private lateinit var searchBar: EditText
+    private lateinit var emojiButton: ImageButton
+    private lateinit var emojiCloseButton: ImageButton
     private lateinit var symButton: ImageButton
+    private lateinit var symCloseButton: ImageButton
     private lateinit var clipboardButton: ImageButton
     private lateinit var emptyClipboardMessage: TextView
     private lateinit var recyclerView: RecyclerView
@@ -46,12 +50,18 @@ class PickerManager(private val context: Context, private val service: InputMeth
                 initialPressComplete = true
                 return@OnKeyListener true // Consume the event
             }
-            popupWindow?.dismiss()
+            if (currentView == ViewType.EMOJI)
+                popupWindow?.dismiss()
+            else
+                switchToView(ViewType.EMOJI)
             return@OnKeyListener true
         }
 
         if (event.action == KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_SYM) {
-            switchToView(ViewType.SYMBOL)
+            if (currentView == ViewType.SYMBOL)
+                popupWindow?.dismiss()
+            else
+                switchToView(ViewType.SYMBOL)
             return@OnKeyListener true
         }
 
@@ -123,8 +133,11 @@ class PickerManager(private val context: Context, private val service: InputMeth
 
         contentArea = containerView.findViewById(R.id.picker_content_area)
         searchBar = containerView.findViewById(R.id.search_bar)
-        val backButton = containerView.findViewById<ImageButton>(R.id.back_button)
+        titleArea = containerView.findViewById(R.id.picker_title)
+        emojiButton = containerView.findViewById<ImageButton>(R.id.emoji_view_button)
+        emojiCloseButton = containerView.findViewById<ImageButton>(R.id.emoji_close_button)
         symButton = containerView.findViewById(R.id.sym_button)
+        symCloseButton = containerView.findViewById(R.id.sym_close_button)
         clipboardButton = containerView.findViewById(R.id.clipboard_button)
         emptyClipboardMessage = containerView.findViewById(R.id.empty_clipboard_message)
 
@@ -133,7 +146,9 @@ class PickerManager(private val context: Context, private val service: InputMeth
         contentArea.addView(recyclerView)
 
 
-        backButton.setOnClickListener { popupWindow?.dismiss() }
+        symCloseButton.setOnClickListener { popupWindow?.dismiss() }
+        emojiCloseButton.setOnClickListener { popupWindow?.dismiss() }
+        emojiButton.setOnClickListener { switchToView(ViewType.EMOJI) }
         symButton.setOnClickListener { switchToView(ViewType.SYMBOL) }
         clipboardButton.setOnClickListener { switchToView(ViewType.CLIPBOARD) }
 
@@ -162,12 +177,19 @@ class PickerManager(private val context: Context, private val service: InputMeth
         // Remove the searchBar watcher before switching
         activeTextWatcher?.let { searchBar.removeTextChangedListener(it) }
 
+        symCloseButton.visibility = View.GONE
+        emojiCloseButton.visibility = View.GONE
+        titleArea.visibility = View.GONE
+        emojiButton.visibility = View.VISIBLE
+        symButton.visibility = View.VISIBLE
+        searchBar.visibility = View.VISIBLE
+        clipboardButton.visibility = View.VISIBLE
+
         when (viewType) {
             ViewType.EMOJI -> {
+                emojiButton.visibility = View.GONE
+                emojiCloseButton.visibility = View.VISIBLE
                 recyclerView.visibility = View.VISIBLE
-                searchBar.visibility = View.VISIBLE
-                symButton.visibility = View.VISIBLE
-                clipboardButton.visibility = View.VISIBLE
                 val adapter = getEmojiAdapter()
                 adapter.refresh()
                 val layoutManager = GridLayoutManager(context, EmojiAdapter.GRID_SPAN_COUNT)
@@ -186,18 +208,17 @@ class PickerManager(private val context: Context, private val service: InputMeth
                 searchBar.addTextChangedListener(activeTextWatcher)
             }
             ViewType.SYMBOL -> {
+                symButton.visibility = View.GONE
+                symCloseButton.visibility = View.VISIBLE
                 recyclerView.visibility = View.VISIBLE
                 searchBar.visibility = View.GONE
-                symButton.visibility = View.GONE
-                clipboardButton.visibility = View.VISIBLE
+                titleArea.visibility = View.VISIBLE
                 val adapter = getSymbolAdapter()
                 recyclerView.layoutManager = GridLayoutManager(context, 10)
                 recyclerView.adapter = adapter
                 popupWindow?.contentView?.requestFocus()
             }
             ViewType.CLIPBOARD -> {
-                searchBar.visibility = View.VISIBLE
-                symButton.visibility = View.VISIBLE
                 clipboardButton.visibility = View.GONE
                 val history = ClipboardHistoryManager.getHistory()
                 if (history.isEmpty()) {
