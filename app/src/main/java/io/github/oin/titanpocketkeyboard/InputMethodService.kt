@@ -492,18 +492,6 @@ class InputMethodService : AndroidInputMethodService() {
 	 * Handle a key down event when the SYM modifier is enabled.
 	 */
 	fun onSymKey(event: KeyEvent, pressed: Boolean): Boolean {
-
-		// The SPACE key is equivalent to hitting Shift
-		if(event.keyCode == KeyEvent.KEYCODE_SPACE) {
-			if(pressed) {
-				shift.onKeyDown()
-			} else {
-				shift.onKeyUp()
-			}
-			updateStatusIconIfNeeded(true)
-			return true
-		}
-
 		val mapping = SymKeyMappings.getMapping(event.keyCode, deviceType) ?: return if (!event.isPrintingKey) {
 			if (pressed) super.onKeyDown(event.keyCode, event) else super.onKeyUp(event.keyCode, event)
 		} else true
@@ -515,11 +503,19 @@ class InputMethodService : AndroidInputMethodService() {
 					val char = if (shift.get() && action.shiftedCharacter != null) action.shiftedCharacter else action.character
 					sendCharacter(char)
 				}
+				is ShiftPress -> {
+					shift.onKeyDown()
+					updateStatusIconIfNeeded(true)
+				}
 			}
 		} else if (!pressed) {
 			when (val action = mapping.action) {
 				is SendKey -> sendKey(action.keyCode, event, false)
 				is SendChar -> { /* No action on key up for characters */ }
+				is ShiftPress -> {
+					shift.onKeyUp()
+					updateStatusIconIfNeeded(true)
+				}
 			}
 		}
 		return true

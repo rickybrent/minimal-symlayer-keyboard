@@ -7,6 +7,7 @@ import android.view.KeyEvent
 sealed class SymAction
 data class SendKey(val keyCode: Int) : SymAction()
 data class SendChar(val character: String, val shiftedCharacter: String? = null) : SymAction()
+object ShiftPress : SymAction()
 
 // Data class to hold the action and the display text together
 data class KeyMapping(val display: String, val action: SymAction)
@@ -36,7 +37,7 @@ object SymKeyMappings {
         KeyEvent.KEYCODE_N to KeyMapping("=", SendChar("=")),
         KeyEvent.KEYCODE_E to KeyMapping("€", SendChar("€")),
         KeyEvent.KEYCODE_M to KeyMapping("%", SendChar("%")),
-        KeyEvent.KEYCODE_SPACE to KeyMapping("%", SendChar("%"))
+        KeyEvent.KEYCODE_SPACE to KeyMapping("⇧", ShiftPress)
     )
 
     // --- MINIMAL PHONE MP01 MAPPINGS ---
