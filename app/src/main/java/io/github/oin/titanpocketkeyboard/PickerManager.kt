@@ -242,7 +242,13 @@ class PickerManager(private val context: Context, private val service: InputMeth
                 searchBar.visibility = View.GONE
                 titleArea.visibility = View.VISIBLE
                 val adapter = getSymbolAdapter()
-                recyclerView.layoutManager = GridLayoutManager(context, 10)
+                val layoutManager = GridLayoutManager(context, 10)
+                layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+                    override fun getSpanSize(position: Int): Int {
+                        return adapter.getSpanSize(position)
+                    }
+                }
+                recyclerView.layoutManager = layoutManager
                 recyclerView.adapter = adapter
                 popupWindow?.contentView?.requestFocus()
             }
