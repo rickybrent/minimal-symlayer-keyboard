@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   height="24px"
+   viewBox="0 -960 960 960"
+   width="24px"
+   fill="#e3e3e3"
+   version="1.1"
+   id="svg297"
+   sodipodi:docname="ic_pin_filled.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs301" />
+  <sodipodi:namedview
+     id="namedview299"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="35.920388"
+     inkscape:cx="11.274934"
+     inkscape:cy="13.209768"
+     inkscape:window-width="2194"
+     inkscape:window-height="1178"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg297" />
+  <path
+     id="path295"
+     style="fill:#000000"
+     d="M 280 -840 L 280 -760 L 320 -760 L 320 -480 L 240 -400 L 240 -320 L 440 -320 L 440 -80 L 480 -40 L 520 -80 L 520 -320 L 720 -320 L 720 -400 L 640 -480 L 640 -760 L 680 -760 L 680 -840 L 280 -840 z " />
+</svg>

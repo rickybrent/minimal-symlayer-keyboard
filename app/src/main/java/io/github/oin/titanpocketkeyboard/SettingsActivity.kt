@@ -122,9 +122,15 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 			val licenses = listOf(
 				LicenseInfo(
 					"all_emojis.txt",
-					"Emoji Data (Unicode License)",
+					"Unicode License",
 					"https://github.com/Mange/emoji-data".toUri(),
 					R.raw.license_unicode
+				),
+				LicenseInfo(
+					"Material Symbols Icons",
+					"Apache License v2.0",
+					"https://fonts.google.com/icons".toUri(),
+					R.raw.license_apache2
 				)
 				// Add other licenses here, for example:
 				// LicenseInfo("Custom Font Name", "SIL Open Font License", R.raw.license_sil_ofl)
