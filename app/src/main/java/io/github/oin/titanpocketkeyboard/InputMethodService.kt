@@ -138,7 +138,7 @@ class InputMethodService : AndroidInputMethodService() {
 	private lateinit var vibrator: Vibrator
 	private var pickerManager: PickerManager? = null
 
-	private val shift = Modifier()
+	val shift = Modifier()
 	private val alt = Modifier()
 	private val sym = SimpleModifier()
 	private val dotCtrl = TripleModifier(KeyEvent.KEYCODE_CTRL_RIGHT, KeyEvent.KEYCODE_PERIOD, KeyEvent.KEYCODE_VOICE_ASSIST)
@@ -596,6 +596,10 @@ class InputMethodService : AndroidInputMethodService() {
 	 */
 	private fun vibrate() {
 		vibrator.vibrate(VibrationEffect.createOneShot(25, VibrationEffect.DEFAULT_AMPLITUDE))
+	}
+
+	fun updateStatusIcon() {
+		updateStatusIconIfNeeded(true)
 	}
 
 	/**

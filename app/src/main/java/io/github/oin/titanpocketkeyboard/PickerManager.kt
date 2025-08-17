@@ -109,8 +109,20 @@ class PickerManager(private val context: Context, private val service: InputMeth
     private fun getSymbolAdapter(): SymbolAdapter {
         if (symbolAdapter == null) {
             symbolAdapter = SymbolAdapter(service) { keyCode ->
-                service.onSymKey(KeyEvent(KeyEvent.ACTION_DOWN, keyCode), true)
-                service.onSymKey(KeyEvent(KeyEvent.ACTION_UP, keyCode), false)
+                if (keyCode == KeyEvent.KEYCODE_SHIFT_LEFT || keyCode == KeyEvent.KEYCODE_SHIFT_RIGHT) {
+                    if (service.shift.get()) {
+                        service.shift.reset()
+                    } else {
+                        service.shift.onKeyDown()
+                        service.shift.onKeyUp()
+                    }
+                    service.updateStatusIcon()
+                } else if (keyCode == KeyEvent.KEYCODE_SPACE || keyCode == KeyEvent.KEYCODE_DEL) {
+                    service.sendDownUpKeyEvents(keyCode)
+                } else {
+                    service.onSymKey(KeyEvent(KeyEvent.ACTION_DOWN, keyCode), true)
+                    service.onSymKey(KeyEvent(KeyEvent.ACTION_UP, keyCode), false)
+                }
             }
         }
         return symbolAdapter!!
