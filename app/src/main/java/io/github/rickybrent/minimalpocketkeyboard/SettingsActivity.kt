@@ -1,4 +1,4 @@
-package io.github.oin.titanpocketkeyboard
+package io.github.rickybrent.minimalpocketkeyboard
 
 import android.content.DialogInterface
 import android.content.Intent
@@ -111,7 +111,7 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 			findPreference<Preference>("about_github")?.setOnPreferenceClickListener {
 				val intent = Intent(
 					Intent.ACTION_VIEW,
-					"https://github.com/oin/titanpocketkeyboard".toUri()
+					"https://github.com/rickybrent/minimalpocketkeyboard".toUri()
 				)
 				startActivity(intent)
 				true

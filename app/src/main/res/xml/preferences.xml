@@ -72,6 +72,6 @@
 			/>
 		<Preference
 			android:title="About"
-			app:fragment="io.github.oin.titanpocketkeyboard.SettingsActivity$AboutFragment" />
+			app:fragment="io.github.rickybrent.minimalpocketkeyboard.SettingsActivity$AboutFragment" />
 	</PreferenceCategory>
 </PreferenceScreen>

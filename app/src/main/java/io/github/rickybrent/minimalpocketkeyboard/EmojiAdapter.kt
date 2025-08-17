@@ -1,9 +1,8 @@
-package io.github.oin.titanpocketkeyboard
+package io.github.rickybrent.minimalpocketkeyboard
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
-import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup

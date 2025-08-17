@@ -13,5 +13,5 @@ dependencyResolutionManagement {
 	}
 }
 
-rootProject.name = "TitanPocketKeyboard"
+rootProject.name = "MinimalPocketKeyboard"
 include(":app")

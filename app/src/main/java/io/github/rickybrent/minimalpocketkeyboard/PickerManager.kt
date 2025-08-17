@@ -1,9 +1,8 @@
-package io.github.oin.titanpocketkeyboard
+package io.github.rickybrent.minimalpocketkeyboard
 
 import android.content.Context
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.LayoutInflater

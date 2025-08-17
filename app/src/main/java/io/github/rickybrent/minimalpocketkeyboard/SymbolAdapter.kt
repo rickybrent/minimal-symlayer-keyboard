@@ -1,4 +1,4 @@
-package io.github.oin.titanpocketkeyboard
+package io.github.rickybrent.minimalpocketkeyboard
 
 import android.view.KeyEvent
 import android.view.LayoutInflater

@@ -4,15 +4,15 @@ plugins {
 }
 
 android {
-	namespace = "io.github.oin.titanpocketkeyboard"
+	namespace = "io.github.rickybrent.minimalpocketkeyboard"
 	compileSdk = 34
 
 	defaultConfig {
-		applicationId = "io.github.oin.titanpocketkeyboard"
+		applicationId = "io.github.rickybrent.minimalpocketkeyboard"
 		minSdk = 29
 		targetSdk = 33
 		versionCode = 1
-		versionName = "1.0"
+		versionName = "0.4"
 
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 	}

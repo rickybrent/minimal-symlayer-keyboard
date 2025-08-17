@@ -1,4 +1,4 @@
-package io.github.oin.titanpocketkeyboard
+package io.github.rickybrent.minimalpocketkeyboard
 
 /**
  * A virtual modifier that can be used in the following ways:

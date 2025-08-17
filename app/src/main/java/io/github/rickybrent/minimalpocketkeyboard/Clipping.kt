@@ -1,4 +1,4 @@
-package io.github.oin.titanpocketkeyboard
+package io.github.rickybrent.minimalpocketkeyboard
 
 data class Clipping(
     val text: String,

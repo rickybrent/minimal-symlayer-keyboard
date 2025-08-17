@@ -1,4 +1,4 @@
-package io.github.oin.titanpocketkeyboard
+package io.github.rickybrent.minimalpocketkeyboard
 
 import android.content.Context
 import android.os.VibrationEffect
@@ -11,7 +11,6 @@ import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import androidx.preference.PreferenceManager
-import java.security.Key
 import java.util.Locale
 import android.inputmethodservice.InputMethodService as AndroidInputMethodService
 
