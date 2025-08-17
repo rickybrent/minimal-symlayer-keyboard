@@ -4,12 +4,15 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
 import androidx.core.net.toUri
-
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceGroup
 import androidx.preference.PreferenceManager
 
 class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
@@ -17,6 +20,7 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.settings_activity)
+		setSupportActionBar(findViewById(R.id.toolbar))
 		if (savedInstanceState == null) {
 			supportFragmentManager
 				.beginTransaction()
@@ -31,6 +35,32 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 			return true
 		}
 		return super.onSupportNavigateUp()
+	}
+
+	override fun onOptionsItemSelected(item: MenuItem): Boolean {
+		if (item.itemId == android.R.id.home) {
+			onBackPressedDispatcher.onBackPressed()
+			return true
+		}
+		return super.onOptionsItemSelected(item)
+	}
+
+	override fun onCreateOptionsMenu(menu: Menu): Boolean {
+		menuInflater.inflate(R.menu.settings_menu, menu)
+		val searchItem = menu.findItem(R.id.action_search)
+		val searchView = searchItem.actionView as SearchView
+		searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+			override fun onQueryTextSubmit(query: String?): Boolean {
+				return false
+			}
+
+			override fun onQueryTextChange(newText: String?): Boolean {
+				val fragment = supportFragmentManager.findFragmentById(R.id.settings) as? SettingsFragment
+				fragment?.filterPreferences(newText)
+				return true
+			}
+		})
+		return true
 	}
 
 	override fun onPreferenceStartFragment(
@@ -74,6 +104,46 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 					true
 				}
 			}
+		}
+
+		fun filterPreferences(query: String?) {
+			val preferenceScreen = preferenceScreen
+			val lowerCaseQuery = query?.lowercase()?.trim()
+
+			for (i in 0 until preferenceScreen.preferenceCount) {
+				val preference = preferenceScreen.getPreference(i)
+				if (preference is PreferenceGroup) {
+					filterPreferenceGroup(preference, lowerCaseQuery)
+				} else {
+					filterPreference(preference, lowerCaseQuery)
+				}
+			}
+		}
+
+		private fun filterPreference(preference: Preference, query: String?): Boolean {
+			val title = preference.title.toString().lowercase()
+			val summary = preference.summary?.toString()?.lowercase() ?: ""
+			val visible = query.isNullOrEmpty() || title.contains(query) || summary.contains(query)
+			preference.isVisible = visible
+			return visible
+		}
+
+		private fun filterPreferenceGroup(preferenceGroup: PreferenceGroup, query: String?): Boolean {
+			var visible = false
+			for (i in 0 until preferenceGroup.preferenceCount) {
+				val preference = preferenceGroup.getPreference(i)
+				if (preference is PreferenceGroup) {
+					if (filterPreferenceGroup(preference, query)) {
+						visible = true
+					}
+				} else {
+					if (filterPreference(preference, query)) {
+						visible = true
+					}
+				}
+			}
+			preferenceGroup.isVisible = visible
+			return visible
 		}
 	}
 

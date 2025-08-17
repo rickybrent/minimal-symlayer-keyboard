@@ -1,16 +1,30 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.MinimalPocketKeyboard" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="Theme.MinimalPocketKeyboard" parent="Theme.MaterialComponents.Light.NoActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/purple_500</item>
-        <item name="colorPrimaryVariant">@color/purple_700</item>
-        <item name="colorOnPrimary">@color/white</item>
+        <item name="actionBarStyle">@style/EinkActionBar</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+        <item name="colorPrimaryDark">@android:color/white</item>
+        <item name="android:textColorPrimary">@android:color/black</item>
+        <item name="android:textColorSecondary">@android:color/black</item>
+        <item name="colorPrimary">@color/white</item>
+        <item name="colorPrimaryVariant">#FAFAFA</item>
+        <item name="colorOnPrimary">@color/black</item>
         <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondary">#263238</item>
         <item name="colorSecondaryVariant">@color/teal_700</item>
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <item name="android:statusBarColor">@color/white</item>
         <!-- Customize your theme here. -->
+    </style>
+
+    <style name="EinkActionBar" parent="Widget.AppCompat.ActionBar">
+        <item name="background">@android:color/white</item>
+        <item name="titleTextStyle">@style/EinkActionBar.TitleTextStyle</item>
+    </style>
+
+    <style name="EinkActionBar.TitleTextStyle" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
+        <item name="android:textColor">@android:color/black</item>
     </style>
 </resources>
