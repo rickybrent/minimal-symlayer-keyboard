@@ -9,6 +9,7 @@ import android.view.InputDevice
 import android.view.KeyCharacterMap
 import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import androidx.preference.PreferenceManager
 import java.security.Key
 import java.util.Locale
@@ -568,6 +569,9 @@ class InputMethodService : AndroidInputMethodService() {
 		if (code == KeyEvent.KEYCODE_PICTSYMBOLS) {
 			showEmojiPicker()
 			return
+		} else if (code == KeyEvent.KEYCODE_VOICE_ASSIST) {
+			startVoiceInput()
+			return
 		}
 		val event = makeKeyEvent(original, code, metaState, original.action, original.source, original.deviceId)
 		if (sym.get()) {
@@ -732,6 +736,29 @@ class InputMethodService : AndroidInputMethodService() {
 		if(templates.containsKey(templateId)) {
 			multipress.substitutions[0] = templates[templateId]!!
 		}
+	}
+
+	private fun startVoiceInput() {
+		val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+		val token = window.window?.attributes?.token ?: return
+
+		val voiceImeId = findVoiceIme()
+		if (voiceImeId != null) {
+			imm.setInputMethod(token, voiceImeId)
+		}
+	}
+
+	private fun findVoiceIme(): String? {
+		val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+		for (imi in imm.enabledInputMethodList) {
+			for (i in 0 until imi.subtypeCount) {
+				val subtype = imi.getSubtypeAt(i)
+				if (subtype.mode == "voice") {
+					return imi.id
+				}
+			}
+		}
+		return null
 	}
 
 	fun clearModifiers() {
