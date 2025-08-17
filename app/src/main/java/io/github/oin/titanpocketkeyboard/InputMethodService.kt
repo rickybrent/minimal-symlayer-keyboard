@@ -730,4 +730,14 @@ class InputMethodService : AndroidInputMethodService() {
 			multipress.substitutions[0] = templates[templateId]!!
 		}
 	}
+
+	fun clearModifiers() {
+		shift.reset()
+		alt.reset()
+		sym.reset()
+		dotCtrl.reset()
+		emojiMeta.reset()
+		caps.reset()
+		updateStatusIconIfNeeded(true)
+	}
 }

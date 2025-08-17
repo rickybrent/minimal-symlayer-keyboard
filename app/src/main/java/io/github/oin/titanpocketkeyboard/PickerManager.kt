@@ -179,6 +179,9 @@ class PickerManager(private val context: Context, private val service: InputMeth
             isFocusable = false
             isOutsideTouchable = true
         }
+        popupWindow?.setOnDismissListener {
+            service.clearModifiers()
+        }
     }
 
     private fun switchToView(viewType: ViewType) {
