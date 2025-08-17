@@ -41,7 +41,7 @@ class SymbolAdapter(
             KeyEvent.KEYCODE_J, KeyEvent.KEYCODE_K, KeyEvent.KEYCODE_L,
             KeyEvent.KEYCODE_DEL,
 
-            KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_Z, KeyEvent.KEYCODE_X,
+            KeyEvent.KEYCODE_ALT_LEFT, KeyEvent.KEYCODE_Z, KeyEvent.KEYCODE_X,
             KeyEvent.KEYCODE_C, KeyEvent.KEYCODE_V, KeyEvent.KEYCODE_B,
             KeyEvent.KEYCODE_N, KeyEvent.KEYCODE_M, KeyEvent.KEYCODE_PERIOD,
             KeyEvent.KEYCODE_ENTER,

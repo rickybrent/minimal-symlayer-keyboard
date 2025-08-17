@@ -10,6 +10,7 @@ import android.view.KeyCharacterMap
 import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
 import androidx.preference.PreferenceManager
+import java.security.Key
 import java.util.Locale
 import android.inputmethodservice.InputMethodService as AndroidInputMethodService
 
@@ -47,6 +48,13 @@ fun canUseSuggestions(editorInfo: EditorInfo): Boolean {
 		InputType.TYPE_TEXT_VARIATION_URI -> false
 		else -> true
 	}
+}
+
+/**
+ * @return A KeyEvent made from the given one, but with the given key code.
+ */
+fun makeKeyEvent(original: KeyEvent, code: Int): KeyEvent {
+	return makeKeyEvent(original, code, original.metaState, original.action, original.source, KeyCharacterMap.VIRTUAL_KEYBOARD)
 }
 
 /**
@@ -260,6 +268,10 @@ class InputMethodService : AndroidInputMethodService() {
 	}
 
 	override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+		if (pickerManager?.isShowing() == true && pickerManager!!.handleKeyEvent(event)) {
+			return true
+		}
+
 		updateDeviceType(event)
 		// Update modifier states
 		if(!event.isLongPress && event.repeatCount == 0) {
@@ -278,7 +290,7 @@ class InputMethodService : AndroidInputMethodService() {
 				}
 				KeyEvent.KEYCODE_SYM -> {
 					sym.onKeyDown()
-					onSymPossiblyChanged(true)
+					onSymPossiblyChanged()
 					updateStatusIconIfNeeded(true)
 				}
 				MP01_KEYCODE_DICTATE -> {
@@ -398,6 +410,10 @@ class InputMethodService : AndroidInputMethodService() {
 	}
 
 	override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
+		if (pickerManager?.isShowing() == true && pickerManager!!.handleKeyEvent(event)) {
+			return true
+		}
+
 		// Update modifier states
 		when(event.keyCode) {
 			KeyEvent.KEYCODE_ALT_LEFT, KeyEvent.KEYCODE_ALT_RIGHT -> {
@@ -410,7 +426,7 @@ class InputMethodService : AndroidInputMethodService() {
 			}
 			KeyEvent.KEYCODE_SYM -> {
 				sym.onKeyUp()
-				onSymPossiblyChanged(false)
+				onSymPossiblyChanged()
 				updateStatusIconIfNeeded(true)
 			}
 		}
@@ -442,7 +458,7 @@ class InputMethodService : AndroidInputMethodService() {
 				return true
 			} else if (kbdKey != 0) {
 				// Simulate tapping the shortpress or longpress key.
-				simulateKeyTap(kbdKey, event)
+				simulateKeyTap(kbdKey, event, event.metaState)
 				consumeModifierNext()
 				return true
 			}
@@ -509,6 +525,17 @@ class InputMethodService : AndroidInputMethodService() {
 		return true
 	}
 
+	// Event passed back to us from the Popup for sym key presses.
+	fun forceSymKeyEvent(event: KeyEvent): Boolean {
+		val pressed = event.action == KeyEvent.ACTION_DOWN
+		if (event.keyCode == MP01_KEYCODE_DICTATE)
+			return onSymKey(makeKeyEvent(event, KeyEvent.KEYCODE_PERIOD), pressed)
+		if (onSymKey(event, pressed))
+			return true
+
+		return false
+	}
+
 	/**
 	 * Handle keyboard shortcuts where emojiMeta is held. (TODO: Add search+key shortcuts)
 	 */
@@ -518,16 +545,6 @@ class InputMethodService : AndroidInputMethodService() {
 			return true
 		}
 		return false
-	}
-
-	/**
-	 * Send a D-Pad key press or release.
-	 */
-	private fun sendDPadKey(code: Int, original: KeyEvent, pressed: Boolean) {
-		val newState = enhancedMetaState(original)
-		forceMatchMetaState(original, newState, pressed)
-		currentInputConnection?.sendKeyEvent(makeKeyEvent(original, code, newState, if(pressed) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, InputDevice.SOURCE_DPAD))
-		forceMatchMetaState(original, newState, false)
 	}
 
 	/**
@@ -548,12 +565,12 @@ class InputMethodService : AndroidInputMethodService() {
 		currentInputConnection?.commitText(text, 1)
 	}
 
-	private fun simulateKeyTap(code: Int, original: KeyEvent) {
+	private fun simulateKeyTap(code: Int, original: KeyEvent, metaState: Int) {
 		if (code == KeyEvent.KEYCODE_PICTSYMBOLS) {
 			showEmojiPicker()
 			return
 		}
-		val event = makeKeyEvent(original, code, original.metaState, original.action, original.source, original.deviceId)
+		val event = makeKeyEvent(original, code, metaState, original.action, original.source, original.deviceId)
 		if (sym.get()) {
 			onSymKey(event, true)
 			onSymKey(event, false)
@@ -676,7 +693,7 @@ class InputMethodService : AndroidInputMethodService() {
 	/**
 	 * Handle what happens when the SYM modifier has possibly changed.
 	 */
-	private fun onSymPossiblyChanged(pressed: Boolean) {
+	private fun onSymPossiblyChanged() {
 		if(sym.get() && !lastSym) {
 			if(shift.get() && !shift.isHeld()) {
 				shift.reset()

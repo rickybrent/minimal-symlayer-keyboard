@@ -35,7 +35,8 @@ object SymKeyMappings {
         KeyEvent.KEYCODE_B to KeyMapping("$", SendChar("$")),
         KeyEvent.KEYCODE_N to KeyMapping("=", SendChar("=")),
         KeyEvent.KEYCODE_E to KeyMapping("€", SendChar("€")),
-        KeyEvent.KEYCODE_M to KeyMapping("%", SendChar("%"))
+        KeyEvent.KEYCODE_M to KeyMapping("%", SendChar("%")),
+        KeyEvent.KEYCODE_SPACE to KeyMapping("%", SendChar("%"))
     )
 
     // --- MINIMAL PHONE MP01 MAPPINGS ---
@@ -49,8 +50,8 @@ object SymKeyMappings {
         KeyEvent.KEYCODE_R to KeyMapping("⇱", SendKey(KeyEvent.KEYCODE_MOVE_HOME)),
         KeyEvent.KEYCODE_F to KeyMapping("⇲", SendKey(KeyEvent.KEYCODE_MOVE_END)),
         KeyEvent.KEYCODE_Z to KeyMapping("⇥", SendKey(KeyEvent.KEYCODE_TAB)),
-        KeyEvent.KEYCODE_X to KeyMapping("✂", SendKey(KeyEvent.KEYCODE_CUT)),
-        KeyEvent.KEYCODE_C to KeyMapping("⎘", SendKey(KeyEvent.KEYCODE_COPY)),
+        KeyEvent.KEYCODE_X to KeyMapping("✂︎", SendKey(KeyEvent.KEYCODE_CUT)),
+        KeyEvent.KEYCODE_C to KeyMapping("⎘︎", SendKey(KeyEvent.KEYCODE_COPY)),
         KeyEvent.KEYCODE_V to KeyMapping("📋︎", SendKey(KeyEvent.KEYCODE_PASTE)),
         KeyEvent.KEYCODE_T to KeyMapping("~", SendChar("~")),
         KeyEvent.KEYCODE_G to KeyMapping("`", SendChar("`")),
@@ -87,6 +88,9 @@ object SymKeyMappings {
             KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_SHIFT_RIGHT -> "⇧"
             KeyEvent.KEYCODE_ENTER -> "↵"
             KeyEvent.KEYCODE_DEL -> "⌫"
+            KeyEvent.KEYCODE_ALT_LEFT, KeyEvent.KEYCODE_ALT_RIGHT -> "⌥"
+            KeyEvent.KEYCODE_PICTSYMBOLS -> "☺︎"
+            KeyEvent.KEYCODE_SYM -> "ₛᵧₘ"
             else -> keyCharacterMap.getDisplayLabel(keyCode)?.toString()?.uppercase() ?: ""
         }
     }

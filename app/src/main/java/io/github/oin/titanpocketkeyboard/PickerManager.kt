@@ -3,6 +3,7 @@ package io.github.oin.titanpocketkeyboard
 import android.content.Context
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -42,19 +43,19 @@ class PickerManager(private val context: Context, private val service: InputMeth
         EMOJI, SYMBOL, CLIPBOARD
     }
 
-    // Define the shared key listener as a property of the class
-    private val keyListener = View.OnKeyListener { _, keyCode, event ->
+    fun handleKeyEvent(event: KeyEvent): Boolean {
+        val keyCode = event.keyCode
         if (event.action == KeyEvent.ACTION_UP && keyCode == MP01_KEYCODE_EMOJI_PICKER) {
             // Prevent the key up event from the opening hotkey from immediately closing the popup.
             if (!initialPressComplete && System.currentTimeMillis() - popupShownTime < 1000) {
                 initialPressComplete = true
-                return@OnKeyListener true // Consume the event
+                return true // Consume the event
             }
             if (currentView == ViewType.EMOJI)
                 popupWindow?.dismiss()
             else
                 switchToView(ViewType.EMOJI)
-            return@OnKeyListener true
+            return true
         }
 
         if (event.action == KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_SYM) {
@@ -62,12 +63,12 @@ class PickerManager(private val context: Context, private val service: InputMeth
                 popupWindow?.dismiss()
             else
                 switchToView(ViewType.SYMBOL)
-            return@OnKeyListener true
+            return true
         }
 
         // Handle 'Enter' key only if the search bar has focus
         if (keyCode == KeyEvent.KEYCODE_ENTER && searchBar.hasFocus()) {
-            if (event.action == KeyEvent.ACTION_DOWN) return@OnKeyListener true // Consume down event
+            if (event.action == KeyEvent.ACTION_DOWN) return true // Consume down event
             if (event.action == KeyEvent.ACTION_UP) {
                 // This will insert text or an emoji and dismiss the popup.
                 when (currentView) {
@@ -75,10 +76,24 @@ class PickerManager(private val context: Context, private val service: InputMeth
                     ViewType.CLIPBOARD -> getClipboardAdapter().selectFirstItem()
                     else -> {}
                 }
-                return@OnKeyListener true
+                return true
             }
         }
-        false // Don't consume other events
+
+        // Forward other key events to the search bar if it has focus
+        if (searchBar.hasFocus() && event.keyCode != KeyEvent.KEYCODE_BACK) {
+             if (event.action == KeyEvent.ACTION_DOWN) {
+                searchBar.onKeyDown(keyCode, event)
+             } else {
+                searchBar.onKeyUp(keyCode, event)
+             }
+             return true
+        } else if (currentView == ViewType.SYMBOL) {
+            // Forward all input as sym key presses on the sym key view.
+            return service.forceSymKeyEvent(event)
+        }
+
+        return false // Don't consume other events
     }
 
     private fun getEmojiAdapter(): EmojiAdapter {
@@ -152,18 +167,16 @@ class PickerManager(private val context: Context, private val service: InputMeth
         symButton.setOnClickListener { switchToView(ViewType.SYMBOL) }
         clipboardButton.setOnClickListener { switchToView(ViewType.CLIPBOARD) }
 
-        // Attach the same listener to both views
-        containerView.isFocusableInTouchMode = true
-        containerView.setOnKeyListener(keyListener)
-        searchBar.setOnKeyListener(keyListener)
+        containerView.isFocusableInTouchMode = false
 
-        val height = (context.resources.displayMetrics.heightPixels / 2.5).toInt()
+        val height = (context.resources.displayMetrics.heightPixels / 2.25).toInt()
         popupWindow = PopupWindow(
             containerView,
             FrameLayout.LayoutParams.MATCH_PARENT,
             height
         ).apply {
-            isFocusable = true
+            // Prevent popupWindow from stealing focus during sym input; we'll forward events from the InputMethodService as needed instead.
+            isFocusable = false
             isOutsideTouchable = true
         }
     }
