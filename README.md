@@ -35,7 +35,7 @@ The Multipress for accented characters feature from the original project is disa
 
 ## Installation
 
-1. Download the latest APK from the [releases](https://github.com/rickybrent/minimal-symlayer-keyboard/releases) page. (Not yet available)
+1. Download the latest APK from the [releases](https://github.com/rickybrent/minimal-symlayer-keyboard/releases) page.
 2. Install the APK on your Minimal Phone MP01.
 3. Go to `Settings` > `System` > `Languages & input` > `Virtual keyboard` > `Manage keyboards` and enable `Minimal Symlayer Input`.
 4. Select `Minimal Symlayer Input` as your default input method.
@@ -59,7 +59,7 @@ The Multipress for accented characters feature from the original project is disa
 Using the `sym` modifier, you can access more keys and symbols.
 For instance, you can use `WASD` (and `HJKL` on the Titan Pocket) to navigate in text.
 
-`sym` modifiers are marked in red; `emoji` modifiers are colored blue (most `emoji` modifiers are yet to be implemented):
+`sym` modifiers are marked in red; `emoji` modifiers are colored blue (some `emoji` modifiers are not yet implemented):
 
 ![`sym` modifier map MP01](readme-symbehavior-mp01.png)
 
