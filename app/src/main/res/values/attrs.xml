@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="SpecialKeyPreference">
+        <attr name="keyIcon" format="reference" />
+        <attr name="tapEntries" format="reference" />
+        <attr name="longPressEntries" format="reference" />
+        <attr name="holdEntries" format="reference" />
+        <attr name="tapValues" format="reference" />
+        <attr name="longPressValues" format="reference" />
+        <attr name="holdValues" format="reference" />
+    </declare-styleable>
+</resources>

@@ -16,6 +16,33 @@
 			app:widgetLayout="@layout/settings_widget_switch"
 			/>
 	</PreferenceCategory>
+	<PreferenceCategory android:title="Special Keys" >
+        <Preference
+            app:summary="Assign actions for tap, long press, and hold + key combinations for certain keys."
+            app:selectable="false"/>
+
+        <io.github.rickybrent.minimal_symlayer_keyboard.SpecialKeyPreference
+            app:key="pref_dotctrl"
+            app:title="Mic/Period"
+            app:keyIcon="@drawable/ic_key_dotvoice"
+            app:tapEntries="@array/dotctrl_tap_entries"
+            app:tapValues="@array/dotctrl_tap_values"
+            app:longPressEntries="@array/dotctrl_long_press_entries"
+            app:longPressValues="@array/dotctrl_long_press_values"
+            app:holdEntries="@array/dotctrl_hold_entries"
+            app:holdValues="@array/dotctrl_hold_values" />
+
+        <io.github.rickybrent.minimal_symlayer_keyboard.SpecialKeyPreference
+            app:key="pref_emojimeta"
+            app:title="Emoji/0"
+            app:keyIcon="@drawable/ic_key_emoji0"
+            app:tapEntries="@array/emojimeta_tap_entries"
+            app:tapValues="@array/emojimeta_tap_values"
+            app:longPressEntries="@array/emojimeta_long_press_entries"
+            app:longPressValues="@array/emojimeta_long_press_values"
+            app:holdEntries="@array/emojimeta_hold_entries"
+            app:holdValues="@array/emojimeta_hold_values" />
+	</PreferenceCategory>
 	<PreferenceCategory android:title="Accented characters">
 		<SwitchPreference
 			android:key="UseFirstLevel"

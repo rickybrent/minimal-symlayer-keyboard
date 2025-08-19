@@ -17,4 +17,61 @@
 		<item>order1</item>
 		<item>order2</item>
 	</string-array>
+	<string-array name="dotctrl_tap_entries">
+		<item>Period</item>
+		<item>Voice to Text</item>
+		<item>—</item>
+	</string-array>
+	<string-array name="dotctrl_tap_values">
+		<item>period</item>
+		<item>voice</item>
+		<item>none</item>
+	</string-array>
+	<string-array name="dotctrl_long_press_entries">
+		<item>Voice to Text</item>
+		<item>Period</item>
+		<item>—</item>
+	</string-array>
+	<string-array name="dotctrl_long_press_values">
+		<item>voice</item>
+		<item>period</item>
+		<item>none</item>
+	</string-array>
+	<string-array name="dotctrl_hold_entries">
+		<item>Control + [Key]</item>
+		<item>—</item>
+	</string-array>
+	<string-array name="dotctrl_hold_values">
+		<item>ctrl</item>
+		<item>none</item>
+	</string-array>
+
+	<string-array name="emojimeta_tap_entries">
+		<item>Emoji Select Popup</item>
+		<item>Zero</item>
+		<item>—</item>
+	</string-array>
+	<string-array name="emojimeta_tap_values">
+		<item>emoji</item>
+		<item>0</item>
+		<item>none</item>
+	</string-array>
+	<string-array name="emojimeta_long_press_entries">
+		<item>Zero</item>
+		<item>Emoji Select Popup</item>
+		<item>—</item>
+	</string-array>
+	<string-array name="emojimeta_long_press_values">
+		<item>0</item>
+		<item>emoji</item>
+		<item>none</item>
+	</string-array>
+	<string-array name="emojimeta_hold_entries">
+		<item>Meta layer + [Key]</item>
+		<item>—</item>
+	</string-array>
+	<string-array name="emojimeta_hold_values">
+		<item>meta</item>
+		<item>none</item>
+	</string-array>
 </resources>

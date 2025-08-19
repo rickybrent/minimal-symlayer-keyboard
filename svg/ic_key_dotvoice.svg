@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="64"
+   height="64"
+   version="1"
+   id="svg35"
+   sodipodi:docname="ic_key_dotvoice.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   inkscape:export-filename="/home/ricky/Downloads/pycapcon.png"
+   inkscape:export-xdpi="205.88"
+   inkscape:export-ydpi="205.88"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <metadata
+     id="metadata39">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="2194"
+     inkscape:window-height="1206"
+     id="namedview37"
+     showgrid="false"
+     inkscape:zoom="5.41047"
+     inkscape:cx="37.519846"
+     inkscape:cy="56.464595"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg35"
+     inkscape:showpageshadow="2"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1" />
+  <defs
+     id="defs7">
+    <linearGradient
+       id="linearGradient8505"
+       x1="168"
+       x2="160"
+       y1="266"
+       y2="270"
+       gradientTransform="matrix(0.79874,0,0,0.79956,-95.82,-175.89)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0"
+         id="stop2" />
+      <stop
+         offset="1"
+         stop-opacity="0"
+         id="stop4" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient8505-3"
+       x1="168"
+       x2="160"
+       y1="266"
+       y2="270"
+       gradientTransform="matrix(0.70100521,0,0,0.70172487,-83.581087,-144.71721)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0"
+         id="stop2-6" />
+      <stop
+         offset="1"
+         stop-opacity="0"
+         id="stop4-7" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient5"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#b6b6b6;stop-opacity:1;"
+         offset="0.50119114"
+         id="stop5" />
+      <stop
+         style="stop-color:#474747;stop-opacity:1;"
+         offset="0.50119114"
+         id="stop6" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5"
+       id="linearGradient2"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(6.0926615,0,0,6.0926615,155.76211,194.58248)"
+       x1="-24.214283"
+       y1="-30.585888"
+       x2="-16.412346"
+       y2="-22.783947" />
+  </defs>
+  <rect
+     style="display:inline;fill:#ffffff;fill-opacity:1;stroke:url(#linearGradient2);stroke-width:3.224;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:14;stroke-dasharray:none;stroke-opacity:1"
+     id="rect5-3-3-9-5"
+     width="60.775959"
+     height="60.775959"
+     x="1.6120197"
+     y="1.6120197"
+     sodipodi:type="rect"
+     ry="11.971022"
+     inkscape:label="key"
+     rx="11.971022" />
+  <path
+     d="m 21.34281,23.174206 c 1.318429,0 2.15998,-0.953758 2.15998,-2.216085 0,-1.31843 -0.869602,-2.216084 -2.131929,-2.216084 -1.234275,0 -2.131929,0.925706 -2.131929,2.216084 0,1.262327 0.869603,2.216085 2.103878,2.216085 z"
+     id="path5693"
+     style="font-weight:600;font-size:28.0517px;line-height:1;font-family:'Myriad Pro';-inkscape-font-specification:'Myriad Pro Semi-Bold';text-align:center;letter-spacing:-3.54336px;text-anchor:middle;stroke-width:1.67156;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0" />
+  <path
+     d="m 32.995029,29.962682 c 0.568091,-0.819619 1.252131,-1.229432 2.053224,-1.229432 0.801216,0 1.485257,0.409813 2.05298,1.229432 0.56809,0.81962 0.851521,1.80783 0.851521,2.964501 v 6.994383 c 0,1.165628 -0.283441,2.158377 -0.851521,2.978119 -0.56809,0.811033 -1.252008,1.215934 -2.05298,1.215934 -0.801216,0 -1.4855,-0.404901 -2.053224,-1.215934 -0.56809,-0.819619 -0.851521,-1.812368 -0.851521,-2.978119 v -6.994383 c 0,-1.157041 0.283441,-2.144881 0.851521,-2.964501 z m -3.655411,8.61326 v 1.782184 c 0,1.568688 0.557049,2.914562 1.670898,4.037737 1.114095,1.114095 2.455183,1.670897 4.023872,1.670897 1.577895,0 2.926219,-0.554594 4.037737,-1.670897 1.116549,-1.121458 1.670774,-2.469049 1.670774,-4.037737 v -1.782184 c 0,-0.296914 0.09817,-0.547232 0.30675,-0.752137 0.213482,-0.213482 0.468706,-0.320255 0.765633,-0.320255 0.296913,0 0.547232,0.110442 0.752137,0.320255 0.213481,0.213482 0.320255,0.463797 0.320255,0.752137 v 1.782184 c 0,1.967827 -0.650298,3.689644 -1.949177,5.165574 -1.290289,1.47593 -2.896159,2.343771 -4.817605,2.603647 v 1.656418 h 2.130279 c 0.30675,0 0.561955,0.09817 0.765636,0.306751 0.203677,0.213481 0.30675,0.468705 0.30675,0.765635 0,0.30675 -0.110442,0.561955 -0.320255,0.765632 -0.203678,0.203678 -0.455207,0.30675 -0.752137,0.30675 H 35.049 31.832602 c -0.296913,0 -0.547232,-0.09817 -0.752137,-0.30675 -0.203678,-0.203677 -0.30675,-0.458888 -0.30675,-0.765632 0,-0.296914 0.09817,-0.552141 0.30675,-0.765635 0.203678,-0.203678 0.455207,-0.306751 0.752137,-0.306751 h 2.144265 V 48.127347 C 32.055421,47.867214 30.444889,46.999753 29.145397,45.5237 27.855231,44.04777 27.210085,42.325953 27.210085,40.358126 v -1.782184 c 0,-0.296914 0.09817,-0.547232 0.30675,-0.752137 0.213482,-0.213482 0.463797,-0.320255 0.752137,-0.320255 0.296914,0 0.547232,0.110442 0.752137,0.320255 0.213482,0.203678 0.617169,0.752137 0.320256,0.752137 z"
+     id="text63-6"
+     style="font-size:4.93889px;line-height:1;font-family:'Myriad Pro';-inkscape-font-specification:'Myriad Pro';text-align:center;text-anchor:middle;display:inline;stroke-width:1.67156;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0"
+     inkscape:label="mic"
+     aria-label=""
+     sodipodi:nodetypes="ssssscscssscscsssssscsscccscscscssscscccsssscsc" />
+</svg>
