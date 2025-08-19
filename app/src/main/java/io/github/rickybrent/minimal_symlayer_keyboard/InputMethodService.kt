@@ -141,8 +141,8 @@ class InputMethodService : AndroidInputMethodService() {
 	val shift = Modifier()
 	private val alt = Modifier()
 	private val sym = SimpleModifier()
-	private val dotCtrl = TripleModifier(KeyEvent.KEYCODE_CTRL_RIGHT, KeyEvent.KEYCODE_PERIOD, KeyEvent.KEYCODE_VOICE_ASSIST)
-	private val emojiMeta = TripleModifier(KeyEvent.KEYCODE_META_LEFT, KeyEvent.KEYCODE_PICTSYMBOLS, KeyEvent.KEYCODE_0)
+	private val dotCtrl = TripleModifier()
+	private val emojiMeta = TripleModifier()
 	private val caps = Modifier()
 
 	private var lastShift = false
@@ -384,11 +384,11 @@ class InputMethodService : AndroidInputMethodService() {
 			return true
 		} else if (KeyEvent.isModifierKey(event.keyCode)) {
 			// pass
-		} else if (dotCtrl.get() && dotCtrl.getModKey() == 0) {
+		} else if (dotCtrl.get() && dotCtrl.getModKey() == 0 && dotCtrl.modKeyCode != 0) {
 			// mark that we've activated the mod key, then send ctrl.
 			dotCtrl.activateModKey()
 			sendKey(dotCtrl.getModKey(), event, true)
-		} else if (emojiMeta.get() && emojiMeta.getModKey() == 0) {
+		} else if (emojiMeta.get() && emojiMeta.getModKey() == 0 && emojiMeta.modKeyCode != 0) {
 			// mark that we've activated the mod key, then send meta.
 			emojiMeta.activateModKey()
 			sendKey(emojiMeta.getModKey(), event, true)
@@ -734,6 +734,26 @@ class InputMethodService : AndroidInputMethodService() {
 		val templateId = preferences.getString("FirstLevelTemplate", "fr")
 		if(templates.containsKey(templateId)) {
 			multipress.substitutions[0] = templates[templateId]!!
+		}
+
+		dotCtrl.shortPressKeyCode = preferenceToKeyCode(preferences.getString("pref_dotctrl_tap", "period"))
+		dotCtrl.longPressKeyCode = preferenceToKeyCode(preferences.getString("pref_dotctrl_long_press", "voice"))
+		dotCtrl.modKeyCode = preferenceToKeyCode(preferences.getString("pref_dotctrl_hold", "ctrl"))
+
+		emojiMeta.shortPressKeyCode = preferenceToKeyCode(preferences.getString("pref_emojimeta_tap", "emoji"))
+		emojiMeta.longPressKeyCode = preferenceToKeyCode(preferences.getString("pref_emojimeta_long_press", "0"))
+		emojiMeta.modKeyCode = preferenceToKeyCode(preferences.getString("pref_emojimeta_hold", "meta"))
+	}
+
+	private fun preferenceToKeyCode(preferenceValue: String?): Int {
+		return when (preferenceValue) {
+			"period" -> KeyEvent.KEYCODE_PERIOD
+			"voice" -> KeyEvent.KEYCODE_VOICE_ASSIST
+			"ctrl" -> KeyEvent.KEYCODE_CTRL_RIGHT
+			"emoji" -> KeyEvent.KEYCODE_PICTSYMBOLS
+			"0" -> KeyEvent.KEYCODE_0
+			"meta" -> KeyEvent.KEYCODE_META_LEFT
+			else -> 0 // "none" or any other value
 		}
 	}
 

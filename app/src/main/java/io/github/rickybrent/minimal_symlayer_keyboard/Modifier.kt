@@ -120,14 +120,14 @@ class SimpleModifier {
  *  - press and immediately release to trigger a different keypress
  *  - trigger a "long press" event if it was held for long enough without any other keys being pressed.
  */
-class TripleModifier(
+class TripleModifier {
 	/**
 	 * The keycode to send when held and other keys are input.
 	 */
-	var modKeyCode: Int,
-	var shortPressKeyCode: Int,
-	var longPressKeyCode: Int
-) {
+	var modKeyCode: Int = 0
+	var shortPressKeyCode: Int = 0
+	var longPressKeyCode: Int = 0
+
 	/**
 	 * The maximum time of a double press needed to lock a modifier, in milliseconds.
 	 */
@@ -217,6 +217,7 @@ class TripleModifier(
 	}
 
 	fun activateModKey() {
-		modMode = true
+		if (modKeyCode != 0)
+			modMode = true
 	}
 }
