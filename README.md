@@ -1,11 +1,10 @@
-# MinimalPocketKeyboard
+# Minimal SymLayer Keyboard
 
-This is an Android input method for the **Minimal Phone MP01**, though it may be useful for other devices with built in thumbboards. It does not contain a virtual keyboard.  It is a fork of the excellent [TitanPocketKeyboard by oin](https://github.com/oin/titanpocketkeyboard), which was originally designed for the Unihertz Titan Pocket.
+`Minimal SymLayer Keyboard` is an Android input method for the Minimal Phone MP01, though it may be useful for other devices with built in thumbboards. It does not contain a virtual keyboard but adds a SYM layer for physical keys.
 
-This version has been extended with a focus on the Minimal Phone's unique hardware and e-ink display. It introduces several new features (a keyboard-focused emoji picker, a clipboard history manager, and additional virtual modifier keys) and adds special handling for the MP01's unique keys.
+The project is a fork of the excellent  [TitanPocketKeyboard by oin](https://github.com/oin/titanpocketkeyboard), which was originally designed for the Unihertz Titan Pocket, and has no relation to Lersi's [Minimal Phone Keyboard](https://github.com/lersi/minimal_phone_keyboard) or the keyboard that shipped with the Minimal Phone.
 
-This fork has no relation to Lersi's [Minimal Phone Keyboard](https://github.com/lersi/minimal_phone_keyboard) fork, or to the version that shipped with the Minimal Phone.
-
+This fork adds several new features (a keyboard-focused emoji picker, a clipboard history manager, and additional virtual modifier keys) and special handling for the MP01's unique keys and e-ink display.
 
 ### A Note for Unihertz Titan Pocket Users
 
@@ -36,10 +35,10 @@ The Multipress for accented characters feature from the original project is disa
 
 ## Installation
 
-1. Download the latest APK from the [releases](https://github.com/rickybrent/minimalpocketkeyboard/releases) page. (Not yet available)
+1. Download the latest APK from the [releases](https://github.com/rickybrent/minimal-symlayer-keyboard/releases) page. (Not yet available)
 2. Install the APK on your Minimal Phone MP01.
-3. Go to `Settings` > `System` > `Languages & input` > `Virtual keyboard` > `Manage keyboards` and enable `MinimalPocketKeyboard`.
-4. Select MinimalPocketKeyboard as your default input method.
+3. Go to `Settings` > `System` > `Languages & input` > `Virtual keyboard` > `Manage keyboards` and enable `Minimal Symlayer Input`.
+4. Select `Minimal Symlayer Input` as your default input method.
 
 
 

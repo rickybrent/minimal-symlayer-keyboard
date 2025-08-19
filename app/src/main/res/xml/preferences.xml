@@ -77,6 +77,6 @@
 			/>
 		<Preference
 			android:title="About"
-			app:fragment="io.github.rickybrent.minimalpocketkeyboard.SettingsActivity$AboutFragment" />
+			app:fragment="io.github.rickybrent.minimal_symlayer_keyboard.SettingsActivity$AboutFragment" />
 	</PreferenceCategory>
 </PreferenceScreen>

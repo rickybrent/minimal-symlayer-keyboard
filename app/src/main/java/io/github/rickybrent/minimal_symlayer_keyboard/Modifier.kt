@@ -1,4 +1,4 @@
-package io.github.rickybrent.minimalpocketkeyboard
+package io.github.rickybrent.minimal_symlayer_keyboard
 
 /**
  * A virtual modifier that can be used in the following ways:

@@ -1,4 +1,4 @@
-package io.github.rickybrent.minimalpocketkeyboard
+package io.github.rickybrent.minimal_symlayer_keyboard
 
 import android.content.DialogInterface
 import android.content.Intent
@@ -181,7 +181,7 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 			findPreference<Preference>("about_github")?.setOnPreferenceClickListener {
 				val intent = Intent(
 					Intent.ACTION_VIEW,
-					"https://github.com/rickybrent/minimalpocketkeyboard".toUri()
+					"https://github.com/rickybrent/minimal-symlayer-keyboard".toUri()
 				)
 				startActivity(intent)
 				true

@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-	namespace = "io.github.rickybrent.minimalpocketkeyboard"
+	namespace = "io.github.rickybrent.minimal_symlayer_keyboard"
 	compileSdk = 34
 
 	defaultConfig {
-		applicationId = "io.github.rickybrent.minimalpocketkeyboard"
+		applicationId = "io.github.rickybrent.minimal_symlayer_keyboard"
 		minSdk = 29
 		targetSdk = 33
 		versionCode = 1
@@ -18,6 +18,9 @@ android {
 	}
 
 	buildTypes {
+        debug {
+			applicationIdSuffix = ".dev"
+		}
 		release {
 			isMinifyEnabled = false
 			proguardFiles(

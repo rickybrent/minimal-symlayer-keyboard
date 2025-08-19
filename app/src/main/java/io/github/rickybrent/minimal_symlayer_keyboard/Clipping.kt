@@ -1,4 +1,4 @@
-package io.github.rickybrent.minimalpocketkeyboard
+package io.github.rickybrent.minimal_symlayer_keyboard
 
 data class Clipping(
     val text: String,

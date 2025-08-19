@@ -13,5 +13,5 @@ dependencyResolutionManagement {
 	}
 }
 
-rootProject.name = "MinimalPocketKeyboard"
+rootProject.name = "Minimal Symlayer Keyboard"
 include(":app")
