@@ -6,24 +6,24 @@
 			android:defaultValue="true"
 			android:title="Auto-capitalize"
 			android:summary="Start the first word of a sentence with a capital letter"
-			app:widgetLayout="@layout/settings_widget_eink_switch"
+			app:widgetLayout="@layout/settings_widget_switch"
 			/>
 		<SwitchPreference
 			android:key="DotSpace"
 			android:defaultValue="true"
 			android:title="Period with double-space"
 			android:summary="Type two spaces in sequence to create a period"
-			app:widgetLayout="@layout/settings_widget_eink_switch"
+			app:widgetLayout="@layout/settings_widget_switch"
 			/>
 	</PreferenceCategory>
 	<PreferenceCategory android:title="Accented characters">
 		<SwitchPreference
 			android:key="UseFirstLevel"
-			android:defaultValue="true"
+			android:defaultValue="false"
 			android:title="Enable"
 			android:summary="Enable accented characters by multipressing (mostly) vowels"
 
-			app:widgetLayout="@layout/settings_widget_eink_switch"
+			app:widgetLayout="@layout/settings_widget_switch"
 			/>
 		<ListPreference
 			android:key="FirstLevelTemplate"
@@ -38,7 +38,7 @@
 			android:defaultValue="false"
 			android:title="Only vowels"
 			android:summary="Disable multipress for consonants (like ç or ß)"
-			app:widgetLayout="@layout/settings_widget_eink_switch"
+			app:widgetLayout="@layout/settings_widget_switch"
 			/>
 	</PreferenceCategory>
 	<PreferenceCategory android:title="Timing">
