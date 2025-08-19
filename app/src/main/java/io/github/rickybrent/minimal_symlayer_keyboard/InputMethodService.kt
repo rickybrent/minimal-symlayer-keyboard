@@ -1,6 +1,8 @@
 package io.github.rickybrent.minimal_symlayer_keyboard
 
 import android.content.Context
+import android.content.Intent
+import android.provider.Settings
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.text.InputType
@@ -533,7 +535,7 @@ class InputMethodService : AndroidInputMethodService() {
 	}
 
 	/**
-	 * Handle keyboard shortcuts where emojiMeta is held. (TODO: Add search+key shortcuts)
+	 * Handle keyboard shortcuts where emojiMeta is held.
 	 */
 	private fun onEmojiMetaShotcut(event: KeyEvent): Boolean {
 		// skip the extra simulateKeyTap logic with sendDownUpKeyEvents.
@@ -559,48 +561,46 @@ class InputMethodService : AndroidInputMethodService() {
 				sendDownUpKeyEvents(KeyEvent.KEYCODE_ESCAPE)
 				true
 			}
-			// TODO: System-level key events like this is not allowed and fails silently.
-			// Replace with another approach to launch apps. 
-			KeyEvent.KEYCODE_ENTER -> {
-				sendDownUpKeyEvents(KeyEvent.KEYCODE_HOME)
-				true
-			}
 			MP01_KEYCODE_DICTATE -> {
 				// TODO: latch control, even if disabled from dotCtrl.
 				true
 			}
-			KeyEvent.KEYCODE_E -> {
-				sendDownUpKeyEvents(KeyEvent.KEYCODE_ENVELOPE) // Email
+			// Use intents in place of system-level key events.
+			KeyEvent.KEYCODE_ENTER -> { // Home
+				launchApp(Intent.ACTION_MAIN, Intent.CATEGORY_HOME)
 				true
 			}
-			KeyEvent.KEYCODE_A -> {
-				sendDownUpKeyEvents(KeyEvent.KEYCODE_ASSIST) // Assistant
+			KeyEvent.KEYCODE_E -> { // Email
+				launchApp(Intent.ACTION_MAIN, Intent.CATEGORY_APP_EMAIL)
 				true
 			}
-			KeyEvent.KEYCODE_C -> {
-				sendDownUpKeyEvents(KeyEvent.KEYCODE_CONTACTS) // Contacts
+			KeyEvent.KEYCODE_A -> { // Assistant (uses a different action)
+				launchApp(Intent.ACTION_ASSIST)
 				true
 			}
-			KeyEvent.KEYCODE_B -> {
-				sendDownUpKeyEvents(KeyEvent.KEYCODE_EXPLORER) // Browser
+			KeyEvent.KEYCODE_C -> { // Contacts
+				launchApp(Intent.ACTION_MAIN, Intent.CATEGORY_APP_CONTACTS)
 				true
 			}
-			KeyEvent.KEYCODE_N -> {
-				sendDownUpKeyEvents(KeyEvent.KEYCODE_NOTIFICATION) // Notifications
+			KeyEvent.KEYCODE_B -> { // Browser
+				launchApp(Intent.ACTION_MAIN, Intent.CATEGORY_APP_BROWSER)
 				true
 			}
-			KeyEvent.KEYCODE_I -> {
-				sendDownUpKeyEvents(KeyEvent.KEYCODE_SETTINGS) // Settings
+			KeyEvent.KEYCODE_I -> { // Settings
+				launchApp(Settings.ACTION_SETTINGS)
 				true
 			}
-			KeyEvent.KEYCODE_P -> {
-				sendDownUpKeyEvents(KeyEvent.KEYCODE_MUSIC) // Music
+			KeyEvent.KEYCODE_P -> { // Music
+				launchApp(Intent.ACTION_MAIN, Intent.CATEGORY_APP_MUSIC)
 				true
 			}
-			KeyEvent.KEYCODE_L -> {
-				sendDownUpKeyEvents(KeyEvent.KEYCODE_CALENDAR) // Calendar
+			KeyEvent.KEYCODE_L -> { // Calendar
+				launchApp(Intent.ACTION_MAIN, Intent.CATEGORY_APP_CALENDAR)
 				true
 			}
+			// KeyEvent.KEYCODE_N -> // Notification shade. No standard intent for this.
+			// We may be able to use an accessibility service, but it's not a priority for me.
+			// Menu and Escape will only work for some apps when sent like this as well.
 			else -> false
 		}
 	}
@@ -840,6 +840,23 @@ class InputMethodService : AndroidInputMethodService() {
 			}
 		}
 		return null
+	}
+
+	/**
+	 * Launches an application using an Intent.
+	 */
+	private fun launchApp(action: String, category: String? = null) {
+		val intent = Intent(action)
+		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+		if (category != null) {
+			intent.addCategory(category)
+		}
+		try {
+			startActivity(intent)
+		} catch (e: Exception) {
+			// Handle cases where the app isn't found or another error occurs
+			e.printStackTrace()
+		}
 	}
 
 	fun clearModifiers() {
