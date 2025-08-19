@@ -3,10 +3,15 @@ package io.github.rickybrent.minimal_symlayer_keyboard
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.SharedPreferences
+import androidx.core.content.edit
 
 object ClipboardHistoryManager {
     private val clipboardHistory = mutableListOf<Clipping>()
     private var clipboardManager: ClipboardManager? = null
+    private lateinit var prefs: SharedPreferences
+
+    private const val PREF_PINNED_CLIPPINGS = "pinned_clippings"
 
     private val clipboardListener = ClipboardManager.OnPrimaryClipChangedListener {
         val clip = clipboardManager?.primaryClip
@@ -29,7 +34,21 @@ object ClipboardHistoryManager {
         if (clipboardManager == null) {
             clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             clipboardManager?.addPrimaryClipChangedListener(clipboardListener)
+            prefs = context.getSharedPreferences(PREF_PINNED_CLIPPINGS, Context.MODE_PRIVATE)
+            loadPinnedClippings()
         }
+    }
+
+    private fun loadPinnedClippings() {
+        val pinnedItems = prefs.getStringSet(PREF_PINNED_CLIPPINGS, emptySet()) ?: emptySet()
+        pinnedItems.forEach {
+            clipboardHistory.add(Clipping(it, isPinned = true))
+        }
+    }
+
+    private fun savePinnedClippings() {
+        val pinnedItems = clipboardHistory.filter { it.isPinned }.map { it.text }.toSet()
+        prefs.edit { putStringSet(PREF_PINNED_CLIPPINGS, pinnedItems) }
     }
 
     fun getHistory(): List<Clipping> {
@@ -40,6 +59,7 @@ object ClipboardHistoryManager {
         item.isPinned = !item.isPinned
         // Move pinned items to the top
         clipboardHistory.sortByDescending { it.isPinned }
+        savePinnedClippings()
     }
 
     fun removeItem(item: Clipping) {
