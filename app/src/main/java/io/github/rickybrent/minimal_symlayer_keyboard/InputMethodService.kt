@@ -536,11 +536,73 @@ class InputMethodService : AndroidInputMethodService() {
 	 * Handle keyboard shortcuts where emojiMeta is held. (TODO: Add search+key shortcuts)
 	 */
 	private fun onEmojiMetaShotcut(event: KeyEvent): Boolean {
-		if (event.keyCode == KeyEvent.KEYCODE_V) {
-			showClipboardHistory()
-			return true
+		// skip the extra simulateKeyTap logic with sendDownUpKeyEvents.
+		currentInputConnection?.sendKeyEvent(makeKeyEvent(event, emojiMeta.modKeyCode, 0, KeyEvent.ACTION_UP, InputDevice.SOURCE_KEYBOARD))
+		return when (event.keyCode) {
+			KeyEvent.KEYCODE_V -> {
+				showClipboardHistory()
+				true
+			}
+			KeyEvent.KEYCODE_SPACE -> {
+				showEmojiPicker()
+				true
+			}
+			KeyEvent.KEYCODE_M -> {
+				sendDownUpKeyEvents(KeyEvent.KEYCODE_MENU)
+				true
+			}
+			KeyEvent.KEYCODE_Q -> {
+				sendDownUpKeyEvents(KeyEvent.KEYCODE_TAB)
+				true
+			}
+			KeyEvent.KEYCODE_DEL -> {
+				sendDownUpKeyEvents(KeyEvent.KEYCODE_ESCAPE)
+				true
+			}
+			// TODO: System-level key events like this is not allowed and fails silently.
+			// Replace with another approach to launch apps. 
+			KeyEvent.KEYCODE_ENTER -> {
+				sendDownUpKeyEvents(KeyEvent.KEYCODE_HOME)
+				true
+			}
+			MP01_KEYCODE_DICTATE -> {
+				// TODO: latch control, even if disabled from dotCtrl.
+				true
+			}
+			KeyEvent.KEYCODE_E -> {
+				sendDownUpKeyEvents(KeyEvent.KEYCODE_ENVELOPE) // Email
+				true
+			}
+			KeyEvent.KEYCODE_A -> {
+				sendDownUpKeyEvents(KeyEvent.KEYCODE_ASSIST) // Assistant
+				true
+			}
+			KeyEvent.KEYCODE_C -> {
+				sendDownUpKeyEvents(KeyEvent.KEYCODE_CONTACTS) // Contacts
+				true
+			}
+			KeyEvent.KEYCODE_B -> {
+				sendDownUpKeyEvents(KeyEvent.KEYCODE_EXPLORER) // Browser
+				true
+			}
+			KeyEvent.KEYCODE_N -> {
+				sendDownUpKeyEvents(KeyEvent.KEYCODE_NOTIFICATION) // Notifications
+				true
+			}
+			KeyEvent.KEYCODE_I -> {
+				sendDownUpKeyEvents(KeyEvent.KEYCODE_SETTINGS) // Settings
+				true
+			}
+			KeyEvent.KEYCODE_P -> {
+				sendDownUpKeyEvents(KeyEvent.KEYCODE_MUSIC) // Music
+				true
+			}
+			KeyEvent.KEYCODE_L -> {
+				sendDownUpKeyEvents(KeyEvent.KEYCODE_CALENDAR) // Calendar
+				true
+			}
+			else -> false
 		}
-		return false
 	}
 
 	/**
