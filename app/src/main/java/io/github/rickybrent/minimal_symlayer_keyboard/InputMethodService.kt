@@ -1,7 +1,10 @@
 package io.github.rickybrent.minimal_symlayer_keyboard
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.provider.Settings
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -200,16 +203,28 @@ class InputMethodService : AndroidInputMethodService() {
 		)
 	))
 
+	private val unlockReceiver = object : BroadcastReceiver() {
+		override fun onReceive(context: Context?, intent: Intent?) {
+			if (intent?.action == Intent.ACTION_USER_UNLOCKED) {
+				ClipboardHistoryManager.loadPinnedClippings(this@InputMethodService)
+				updateFromPreferences()
+			}
+		}
+	}
+
 	override fun onCreate() {
 		super.onCreate()
-		vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-		ClipboardHistoryManager.initialize(this)
+		val context = createDeviceProtectedStorageContext()
+		ClipboardHistoryManager.initialize(context)
 
-		val preferences = PreferenceManager.getDefaultSharedPreferences(this)
+		val preferences = PreferenceManager.getDefaultSharedPreferences(context)
 		preferences.registerOnSharedPreferenceChangeListener { _, _ ->
 			updateFromPreferences()
 		}
 		updateFromPreferences()
+		val filter = IntentFilter(Intent.ACTION_USER_UNLOCKED)
+		registerReceiver(unlockReceiver, filter)
+		vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 	}
 
 	private fun showEmojiPicker() {
@@ -219,12 +234,12 @@ class InputMethodService : AndroidInputMethodService() {
 		pickerManager?.show()
 	}
 
-    private fun showClipboardHistory() {
-        if (pickerManager == null) {
-            pickerManager = PickerManager(this, this)
-        }
-        pickerManager?.show(PickerManager.ViewType.CLIPBOARD)
-    }
+	private fun showClipboardHistory() {
+		if (pickerManager == null) {
+			pickerManager = PickerManager(this, this)
+		}
+		pickerManager?.show(PickerManager.ViewType.CLIPBOARD)
+	}
 
 	override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
 		super.onStartInput(attribute, restarting)
@@ -775,7 +790,8 @@ class InputMethodService : AndroidInputMethodService() {
 	 * Update values from the preferences.
 	 */
 	private fun updateFromPreferences() {
-		val preferences = PreferenceManager.getDefaultSharedPreferences(this)
+		val context = createDeviceProtectedStorageContext()
+		val preferences = PreferenceManager.getDefaultSharedPreferences(context)
 
 		autoCapitalize = preferences.getBoolean("AutoCapitalize", true)
 

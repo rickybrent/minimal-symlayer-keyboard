@@ -1,8 +1,10 @@
 package io.github.rickybrent.minimal_symlayer_keyboard
 
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -14,6 +16,8 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceGroup
 import androidx.preference.PreferenceManager
+import androidx.preference.PreferenceDataStore
+import androidx.core.content.edit
 
 class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
 
@@ -85,6 +89,7 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 
 	class SettingsFragment : PreferenceFragmentCompat() {
 		override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+			preferenceManager.preferenceDataStore = DeviceProtectedPreferenceDataStore(requireContext())
 			setPreferencesFromResource(R.xml.preferences, rootKey)
 			val context = activity
 			if(context != null) {
@@ -232,5 +237,43 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 				.setPositiveButton(android.R.string.ok, null)
 				.show()
 		}
+	}
+}
+
+class DeviceProtectedPreferenceDataStore(context: Context) : PreferenceDataStore() {
+	private val sharedPreferences by lazy {
+		val storageContext = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+			context.createDeviceProtectedStorageContext()
+		} else {
+			context
+		}
+		storageContext.getSharedPreferences(
+			"${context.packageName}_preferences",
+			Context.MODE_PRIVATE
+		)
+	}
+
+	override fun putString(key: String?, value: String?) {
+		sharedPreferences.edit { putString(key, value) }
+	}
+
+	override fun getString(key: String?, defValue: String?): String? {
+		return sharedPreferences.getString(key, defValue)
+	}
+
+	override fun putBoolean(key: String?, value: Boolean) {
+		sharedPreferences.edit { putBoolean(key, value) }
+	}
+
+	override fun getBoolean(key: String?, defValue: Boolean): Boolean {
+		return sharedPreferences.getBoolean(key, defValue)
+	}
+
+	override fun putInt(key: String?, value: Int) {
+		sharedPreferences.edit { putInt(key, value) }
+	}
+
+	override fun getInt(key: String?, defValue: Int): Int {
+		return sharedPreferences.getInt(key, defValue)
 	}
 }

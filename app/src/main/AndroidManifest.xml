@@ -16,10 +16,15 @@
         <activity
             android:name=".SettingsActivity"
             android:exported="true"
-            android:label="@string/ime_settings">
+            android:label="@string/ime_settings"
+            android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 
@@ -30,6 +35,7 @@
             android:label="@string/ime_label"
             android:permission="android.permission.BIND_INPUT_METHOD"
             android:directBootAware="true">
+
             <intent-filter>
                 <action android:name="android.view.InputMethod" />
             </intent-filter>

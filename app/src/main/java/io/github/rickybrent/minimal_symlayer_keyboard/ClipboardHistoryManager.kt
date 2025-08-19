@@ -9,7 +9,7 @@ import androidx.core.content.edit
 object ClipboardHistoryManager {
     private val clipboardHistory = mutableListOf<Clipping>()
     private var clipboardManager: ClipboardManager? = null
-    private lateinit var prefs: SharedPreferences
+    private var prefs: SharedPreferences? = null
 
     private const val PREF_PINNED_CLIPPINGS = "pinned_clippings"
 
@@ -34,21 +34,26 @@ object ClipboardHistoryManager {
         if (clipboardManager == null) {
             clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             clipboardManager?.addPrimaryClipChangedListener(clipboardListener)
-            prefs = context.getSharedPreferences(PREF_PINNED_CLIPPINGS, Context.MODE_PRIVATE)
-            loadPinnedClippings()
         }
     }
 
-    private fun loadPinnedClippings() {
-        val pinnedItems = prefs.getStringSet(PREF_PINNED_CLIPPINGS, emptySet()) ?: emptySet()
+    fun loadPinnedClippings(context: Context) {
+        if (prefs == null) {
+            prefs = context.getSharedPreferences("clipboard_history", Context.MODE_PRIVATE)
+        }
+        val pinnedItems = prefs?.getStringSet(PREF_PINNED_CLIPPINGS, emptySet()) ?: emptySet()
         pinnedItems.forEach {
-            clipboardHistory.add(Clipping(it, isPinned = true))
+            if (clipboardHistory.none { clipping -> clipping.text == it }) {
+                clipboardHistory.add(Clipping(it, isPinned = true))
+            }
         }
     }
 
     private fun savePinnedClippings() {
-        val pinnedItems = clipboardHistory.filter { it.isPinned }.map { it.text }.toSet()
-        prefs.edit { putStringSet(PREF_PINNED_CLIPPINGS, pinnedItems) }
+        prefs?.let { it ->
+            val pinnedItems = clipboardHistory.filter { it.isPinned }.map { it.text }.toSet()
+            it.edit { putStringSet(PREF_PINNED_CLIPPINGS, pinnedItems) }
+        }
     }
 
     fun getHistory(): List<Clipping> {
