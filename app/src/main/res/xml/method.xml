@@ -3,4 +3,7 @@
 <!--    <subtype-->
 <!--		android:imeSubtypeLocale="en_US"-->
 <!--		android:imeSubtypeMode="keyboard" />-->
+    <subtype
+        android:label="Automatic"
+        android:imeSubtypeMode="keyboard" />
 </input-method>
