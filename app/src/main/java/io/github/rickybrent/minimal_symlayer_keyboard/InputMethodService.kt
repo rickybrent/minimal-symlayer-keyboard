@@ -216,7 +216,6 @@ class InputMethodService : AndroidInputMethodService() {
 	private val unlockReceiver = object : BroadcastReceiver() {
 		override fun onReceive(context: Context?, intent: Intent?) {
 			if (intent?.action == Intent.ACTION_USER_UNLOCKED) {
-				ClipboardHistoryManager.loadPinnedClippings(this@InputMethodService)
 				updateFromPreferences()
 			}
 		}
@@ -225,7 +224,6 @@ class InputMethodService : AndroidInputMethodService() {
 	override fun onCreate() {
 		super.onCreate()
 		val context = createDeviceProtectedStorageContext()
-		ClipboardHistoryManager.initialize(this)
 		pickerManager = PickerManager(this, this)
 
 		val preferences = PreferenceManager.getDefaultSharedPreferences(context)
@@ -296,6 +294,7 @@ class InputMethodService : AndroidInputMethodService() {
 		shift.reset()
 		caps.reset()
 		updateStatusIconIfNeeded()
+		pickerManager?.hide()
 	}
 
 	override fun onUpdateSelection(

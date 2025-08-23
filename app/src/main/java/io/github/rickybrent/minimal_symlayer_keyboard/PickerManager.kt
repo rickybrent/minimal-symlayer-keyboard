@@ -21,7 +21,7 @@ class PickerManager(private val context: Context, private val service: InputMeth
     private var popupWindow: PopupWindow? = null
     private var emojiAdapter: EmojiAdapter? = null
     private var symbolAdapter: SymbolAdapter? = null
-    private var clipboardAdapter: ClipboardAdapter? = null
+    private var clipboardAdapter: ClipboardHistoryAdapter? = null
     private var popupShownTime: Long = 0
     private var initialPressComplete = false
     private var activeTextWatcher: TextWatcher? = null
@@ -147,9 +147,9 @@ class PickerManager(private val context: Context, private val service: InputMeth
         return symbolAdapter!!
     }
 
-    private fun getClipboardAdapter(): ClipboardAdapter {
+    private fun getClipboardAdapter(): ClipboardHistoryAdapter {
         if (clipboardAdapter == null) {
-            clipboardAdapter = ClipboardAdapter { text ->
+            clipboardAdapter = ClipboardHistoryAdapter(context) { text ->
                 service.currentInputConnection?.commitText(text, 1)
                 hide()
             }
@@ -298,15 +298,14 @@ class PickerManager(private val context: Context, private val service: InputMeth
             }
             ViewType.CLIPBOARD -> {
                 clipboardButton.visibility = View.GONE
-                val history = ClipboardHistoryManager.getHistory()
+                val adapter = getClipboardAdapter()
+                adapter.refresh()
+                val history = adapter.getHistory()
                 if (history.isEmpty()) {
                     emptyClipboardMessage.visibility = View.VISIBLE
                 } else {
                     recyclerView.visibility = View.VISIBLE
                 }
-
-                val adapter = getClipboardAdapter()
-                adapter.setHistory(history)
                 recyclerView.layoutManager = LinearLayoutManager(context)
                 recyclerView.adapter = adapter
                 searchBar.requestFocus()
