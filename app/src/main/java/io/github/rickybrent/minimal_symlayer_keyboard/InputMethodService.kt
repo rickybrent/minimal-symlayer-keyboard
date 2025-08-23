@@ -8,6 +8,7 @@ import android.os.Build
 import android.provider.Settings
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.os.VibratorManager
 import android.text.InputType
 import android.text.TextUtils
 import android.view.InputDevice
@@ -224,7 +225,14 @@ class InputMethodService : AndroidInputMethodService() {
 		updateFromPreferences()
 		val filter = IntentFilter(Intent.ACTION_USER_UNLOCKED)
 		registerReceiver(unlockReceiver, filter)
-		vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+
+		vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+			val mgr = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+			mgr.defaultVibrator
+		} else {
+			@Suppress("DEPRECATION")
+			getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+		}
 	}
 
 	private fun showEmojiPicker() {
