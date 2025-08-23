@@ -3,17 +3,20 @@ package io.github.rickybrent.minimal_symlayer_keyboard
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.UserManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Filter
 import android.widget.Filterable
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import androidx.core.content.edit
 
 // --- Data Structures ---
 sealed class GridItem
@@ -28,8 +31,19 @@ class EmojiAdapter(
 
     private val allEmojis: List<Emoji>
     private var recentEmojis: MutableList<Emoji>
+    private var recentEmojisAvailable = false
     private var displayList: List<GridItem> = emptyList()
-    private val prefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+
+    private var _prefs: SharedPreferences? = null
+    val prefs: SharedPreferences?
+        get() {
+            if (_prefs == null) {
+                _prefs = ContextCompat.getSystemService(context, UserManager::class.java)
+                    ?.takeIf { it.isUserUnlocked }
+                    ?.let { PreferenceManager.getDefaultSharedPreferences(context) }
+            }
+            return _prefs
+        }
 
     companion object {
         private const val PREF_RECENT_EMOJI = "recent_emojis"
@@ -136,15 +150,22 @@ class EmojiAdapter(
         return emojis
     }
 
-    private fun loadRecents(): MutableList<Emoji> {
-        val jsonString = prefs.getString(PREF_RECENT_EMOJI, "") ?: ""
-        val recentChars = jsonString.split(",").filter { it.isNotEmpty() }
-        return recentChars.mapNotNull { char -> allEmojis.find { it.character == char } }.toMutableList()
-    }
+    private fun loadRecents(): MutableList<Emoji> =
+        prefs?.let { p ->
+            recentEmojisAvailable = true
+            (p.getString(PREF_RECENT_EMOJI, "") ?: "")
+                .split(",")
+                .filter { it.isNotEmpty() }
+                .mapNotNull { char -> allEmojis.find { it.character == char } }
+                .toMutableList()
+        } ?: mutableListOf()
+
 
     private fun saveRecents() {
+        if (!recentEmojisAvailable)
+            return
         val jsonString = recentEmojis.joinToString(",") { it.character }
-        prefs.edit().putString(PREF_RECENT_EMOJI, jsonString).apply()
+        prefs?.edit { putString(PREF_RECENT_EMOJI, jsonString) }
     }
 
     private fun addEmojiToRecents(emoji: Emoji) {

@@ -4,7 +4,10 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.UserManager
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import androidx.preference.PreferenceManager
 
 object ClipboardHistoryManager {
     private val clipboardHistory = mutableListOf<Clipping>()
@@ -39,7 +42,9 @@ object ClipboardHistoryManager {
 
     fun loadPinnedClippings(context: Context) {
         if (prefs == null) {
-            prefs = context.getSharedPreferences("clipboard_history", Context.MODE_PRIVATE)
+            prefs = ContextCompat.getSystemService(context, UserManager::class.java)
+                    ?.takeIf { it.isUserUnlocked }
+                    ?.let { context.getSharedPreferences("clipboard_history", Context.MODE_PRIVATE) }
         }
         val pinnedItems = prefs?.getStringSet(PREF_PINNED_CLIPPINGS, emptySet()) ?: emptySet()
         pinnedItems.forEach {

@@ -225,7 +225,7 @@ class InputMethodService : AndroidInputMethodService() {
 	override fun onCreate() {
 		super.onCreate()
 		val context = createDeviceProtectedStorageContext()
-		ClipboardHistoryManager.initialize(context)
+		ClipboardHistoryManager.initialize(this)
 		pickerManager = PickerManager(this, this)
 
 		val preferences = PreferenceManager.getDefaultSharedPreferences(context)
@@ -688,9 +688,11 @@ class InputMethodService : AndroidInputMethodService() {
 	private fun simulateKeyTap(code: Int, original: KeyEvent, metaState: Int) {
 		if (code == KeyEvent.KEYCODE_PICTSYMBOLS) {
 			showEmojiPicker()
+			emojiMeta.reset()
 			return
 		} else if (code == KeyEvent.KEYCODE_VOICE_ASSIST) {
 			startVoiceInput()
+			dotCtrl.reset()
 			return
 		}
 		val event = makeKeyEvent(original, code, metaState, original.action, original.source, original.deviceId)
@@ -851,6 +853,7 @@ class InputMethodService : AndroidInputMethodService() {
 
 		pickerManager?.setPickerMode(preferences.getBoolean("pref_inline_picker", false))
 		showToolbar = preferences.getBoolean("pref_show_toolbar", false)
+		this.inputViewStrip?.visibility = if (showToolbar) View.VISIBLE else View.GONE
 
 		autoCapitalize = preferences.getBoolean("AutoCapitalize", true)
 
