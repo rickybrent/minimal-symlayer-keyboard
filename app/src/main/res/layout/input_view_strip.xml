@@ -1,0 +1,72 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="?android:attr/windowBackground"
+    >
+
+    <!-- Top strip for modifier status icons (TODO) and suggestions -->
+    <RelativeLayout
+        android:id="@+id/suggestion_strip"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:background="?android:attr/colorBackground">
+
+        <!-- Menu Button on the far left -->
+        <ImageButton
+            android:id="@+id/menu_button"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_menu_settings_search"
+            android:contentDescription="Settings"
+            android:scaleType="center" />
+
+        <!-- Modifier State Square on the far right -->
+        <FrameLayout
+            android:id="@+id/modifier_state_square"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true">
+
+            <!-- The icon for the current modifier (e.g., Shift, Alt) -->
+            <ImageView
+                android:id="@+id/modifier_icon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                tools:src="@drawable/shift"
+                tools:visibility="visible" />
+
+            <!-- The language code, shown when no modifier is active -->
+            <TextView
+                android:id="@+id/language_code_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="?android:attr/textColorPrimary"
+                tools:text="Aa" />
+        </FrameLayout>
+
+        <!-- Placeholder for where suggestions will appear -->
+        <TextView
+            android:id="@+id/suggestions_view"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_toEndOf="@id/menu_button"
+            android:layout_toStartOf="@id/modifier_state_square"
+            android:gravity="center"
+            android:text=""
+            android:textColor="?android:attr/textColorSecondary"/>
+
+    </RelativeLayout>
+</LinearLayout>

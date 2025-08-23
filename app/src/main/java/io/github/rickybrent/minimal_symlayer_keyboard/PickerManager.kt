@@ -5,8 +5,8 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.Gravity
 import android.view.KeyEvent
-import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
@@ -25,7 +25,12 @@ class PickerManager(private val context: Context, private val service: InputMeth
     private var popupShownTime: Long = 0
     private var initialPressComplete = false
     private var activeTextWatcher: TextWatcher? = null
+    private enum class PickerMode { POPUP, INLINE }
+    private var currentMode = PickerMode.POPUP
     private var currentView: ViewType = ViewType.EMOJI
+
+    private var inlineViewContainer: FrameLayout? = null
+    private val pickerView: View
 
     private lateinit var contentArea: FrameLayout
     private lateinit var titleArea: TextView
@@ -42,6 +47,21 @@ class PickerManager(private val context: Context, private val service: InputMeth
         EMOJI, SYMBOL, CLIPBOARD
     }
 
+    init {
+        pickerView = View.inflate(service, R.layout.picker_container, null)
+    }
+
+    fun setPickerMode(useInline: Boolean) {
+        currentMode = if (useInline) PickerMode.INLINE else PickerMode.POPUP
+    }
+
+    fun setInlineViewContainer(container: FrameLayout?) {
+        inlineViewContainer = container
+        // Ensure pickerView is not attached to a different parent
+        (pickerView.parent as? ViewGroup)?.removeView(pickerView)
+        inlineViewContainer?.addView(pickerView)
+    }
+
     fun handleKeyEvent(event: KeyEvent): Boolean {
         val keyCode = event.keyCode
         if (event.action == KeyEvent.ACTION_UP && keyCode == MP01_KEYCODE_EMOJI_PICKER) {
@@ -51,7 +71,7 @@ class PickerManager(private val context: Context, private val service: InputMeth
                 return true // Consume the event
             }
             if (currentView == ViewType.EMOJI)
-                popupWindow?.dismiss()
+                hide()
             else
                 switchToView(ViewType.EMOJI)
             return true
@@ -59,7 +79,7 @@ class PickerManager(private val context: Context, private val service: InputMeth
 
         if (event.action == KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_SYM) {
             if (currentView == ViewType.SYMBOL)
-                popupWindow?.dismiss()
+                hide()
             else
                 switchToView(ViewType.SYMBOL)
             return true
@@ -99,7 +119,7 @@ class PickerManager(private val context: Context, private val service: InputMeth
         if (emojiAdapter == null) {
             emojiAdapter = EmojiAdapter(context) { emoji ->
                 service.currentInputConnection?.commitText(emoji.character, 1)
-                popupWindow?.dismiss()
+                hide()
             }
         }
         return emojiAdapter!!
@@ -115,7 +135,7 @@ class PickerManager(private val context: Context, private val service: InputMeth
                         service.shift.onKeyDown()
                         service.shift.onKeyUp()
                     }
-                    service.updateStatusIcon()
+                    service.updateModStateIcon()
                 } else if (keyCode == KeyEvent.KEYCODE_SPACE || keyCode == KeyEvent.KEYCODE_DEL) {
                     service.sendDownUpKeyEvents(keyCode)
                 } else {
@@ -131,7 +151,7 @@ class PickerManager(private val context: Context, private val service: InputMeth
         if (clipboardAdapter == null) {
             clipboardAdapter = ClipboardAdapter { text ->
                 service.currentInputConnection?.commitText(text, 1)
-                popupWindow?.dismiss()
+                hide()
             }
         }
         return clipboardAdapter!!
@@ -139,50 +159,75 @@ class PickerManager(private val context: Context, private val service: InputMeth
 
 
     fun show(startingView: ViewType = ViewType.EMOJI) {
+        initialPressComplete = false
+        popupShownTime = System.currentTimeMillis()
+        if (!::contentArea.isInitialized) {
+            setupPickerView()
+        }
+        val height = (context.resources.displayMetrics.heightPixels / 2.25).toInt()
+        if (currentMode == PickerMode.INLINE) {
+            if (isShowing()) {
+                hide()
+                return
+            }
+            switchToView(startingView) // Default to emoji view
+            inlineViewContainer?.let {
+                val layoutParams = it.layoutParams
+                layoutParams.height = height
+                it.layoutParams = layoutParams
+                it.visibility = View.VISIBLE
+            }
+            return
+        }
+
         if (popupWindow == null) {
-            setupPopupWindow()
+            setupPopupWindow(height)
         }
 
         if (popupWindow?.isShowing == true) {
-            popupWindow?.dismiss()
+            hide()
         } else {
-            initialPressComplete = false
-            popupShownTime = System.currentTimeMillis()
             switchToView(startingView) // Default to emoji view
             popupWindow?.showAtLocation(service.window.window!!.decorView, Gravity.BOTTOM, 0, 0)
         }
     }
 
-    private fun setupPopupWindow() {
-        val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        val containerView = inflater.inflate(R.layout.picker_container, null)
+    fun hide() {
+        if (currentMode == PickerMode.INLINE) {
+            inlineViewContainer?.visibility = View.GONE
+        } else {
+            popupWindow?.dismiss()
+        }
+    }
 
-        contentArea = containerView.findViewById(R.id.picker_content_area)
-        searchBar = containerView.findViewById(R.id.search_bar)
-        titleArea = containerView.findViewById(R.id.picker_title)
-        emojiButton = containerView.findViewById<ImageButton>(R.id.emoji_view_button)
-        emojiCloseButton = containerView.findViewById<ImageButton>(R.id.emoji_close_button)
-        symButton = containerView.findViewById(R.id.sym_button)
-        symCloseButton = containerView.findViewById(R.id.sym_close_button)
-        clipboardButton = containerView.findViewById(R.id.clipboard_button)
-        emptyClipboardMessage = containerView.findViewById(R.id.empty_clipboard_message)
+    private fun setupPickerView() {
+        contentArea = pickerView.findViewById(R.id.picker_content_area)
+        searchBar = pickerView.findViewById(R.id.search_bar)
+        titleArea = pickerView.findViewById(R.id.picker_title)
+        emojiButton = pickerView.findViewById<ImageButton>(R.id.emoji_view_button)
+        emojiCloseButton = pickerView.findViewById<ImageButton>(R.id.emoji_close_button)
+        symButton = pickerView.findViewById(R.id.sym_button)
+        symCloseButton = pickerView.findViewById(R.id.sym_close_button)
+        clipboardButton = pickerView.findViewById(R.id.clipboard_button)
+        emptyClipboardMessage = pickerView.findViewById(R.id.empty_clipboard_message)
 
         // Create and add the RecyclerView here
         recyclerView = RecyclerView(context)
         contentArea.addView(recyclerView)
 
 
-        symCloseButton.setOnClickListener { popupWindow?.dismiss() }
-        emojiCloseButton.setOnClickListener { popupWindow?.dismiss() }
+        symCloseButton.setOnClickListener { hide() }
+        emojiCloseButton.setOnClickListener { hide() }
         emojiButton.setOnClickListener { switchToView(ViewType.EMOJI) }
         symButton.setOnClickListener { switchToView(ViewType.SYMBOL) }
         clipboardButton.setOnClickListener { switchToView(ViewType.CLIPBOARD) }
 
-        containerView.isFocusableInTouchMode = false
+        pickerView.isFocusableInTouchMode = false
+    }
 
-        val height = (context.resources.displayMetrics.heightPixels / 2.25).toInt()
+    private fun setupPopupWindow(height: Int) {
         popupWindow = PopupWindow(
-            containerView,
+            pickerView,
             FrameLayout.LayoutParams.MATCH_PARENT,
             height
         ).apply {
@@ -278,5 +323,10 @@ class PickerManager(private val context: Context, private val service: InputMeth
         }
     }
 
-    fun isShowing(): Boolean = popupWindow?.isShowing ?: false
+    fun isShowing(): Boolean {
+        if (currentMode == PickerMode.INLINE) {
+            return inlineViewContainer?.visibility == View.VISIBLE
+        }
+        return popupWindow?.isShowing ?: false
+    }
 }

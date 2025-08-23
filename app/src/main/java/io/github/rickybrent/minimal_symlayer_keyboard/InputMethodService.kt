@@ -11,11 +11,18 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.text.InputType
 import android.text.TextUtils
+import android.util.TypedValue
 import android.view.InputDevice
 import android.view.KeyCharacterMap
 import android.view.KeyEvent
+import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.DrawableCompat
 import androidx.preference.PreferenceManager
 import java.util.Locale
 import android.inputmethodservice.InputMethodService as AndroidInputMethodService
@@ -143,6 +150,10 @@ val templates = hashMapOf(
 class InputMethodService : AndroidInputMethodService() {
 	private lateinit var vibrator: Vibrator
 	private var pickerManager: PickerManager? = null
+	private var mainInputView: View? = null
+	private var inputViewStrip: View? = null
+	private var stripStatusIcon: ImageView? = null
+    private var stripLanguageText: TextView? = null
 
 	val shift = Modifier()
 	private val alt = Modifier()
@@ -217,6 +228,7 @@ class InputMethodService : AndroidInputMethodService() {
 		super.onCreate()
 		val context = createDeviceProtectedStorageContext()
 		ClipboardHistoryManager.initialize(context)
+		pickerManager = PickerManager(this, this)
 
 		val preferences = PreferenceManager.getDefaultSharedPreferences(context)
 		preferences.registerOnSharedPreferenceChangeListener { _, _ ->
@@ -235,17 +247,31 @@ class InputMethodService : AndroidInputMethodService() {
 		}
 	}
 
+	override fun onCreateInputView(): View {
+		mainInputView = layoutInflater.inflate(R.layout.input_view_container, null)
+
+		val pickerContainer = mainInputView?.findViewById<FrameLayout>(R.id.picker_container_inline)
+		pickerManager?.setInlineViewContainer(pickerContainer)
+
+		val inputContainer = mainInputView?.findViewById<FrameLayout>(R.id.input_view_container)
+		this.inputViewStrip = layoutInflater.inflate(R.layout.input_view_strip, null)
+		stripStatusIcon = this.inputViewStrip?.findViewById(R.id.modifier_icon)
+		stripLanguageText = this.inputViewStrip?.findViewById(R.id.language_code_text)
+		inputContainer?.addView(this.inputViewStrip)
+
+		return mainInputView!!
+	}
+
+	override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
+		super.onStartInputView(info, restarting)
+		updateStatusIconIfNeeded()
+	}
+
 	private fun showEmojiPicker() {
-		if (pickerManager == null) {
-			pickerManager = PickerManager(this, this)
-		}
 		pickerManager?.show()
 	}
 
 	private fun showClipboardHistory() {
-		if (pickerManager == null) {
-			pickerManager = PickerManager(this, this)
-		}
 		pickerManager?.show(PickerManager.ViewType.CLIPBOARD)
 	}
 
@@ -686,7 +712,7 @@ class InputMethodService : AndroidInputMethodService() {
 		vibrator.vibrate(VibrationEffect.createOneShot(25, VibrationEffect.DEFAULT_AMPLITUDE))
 	}
 
-	fun updateStatusIcon() {
+	fun updateModStateIcon() {
 		updateStatusIconIfNeeded(true)
 	}
 
@@ -727,6 +753,42 @@ class InputMethodService : AndroidInputMethodService() {
 		lastDotCtrl = ctrlState
 		lastCaps = capsState
 		lastEmojiMeta = metaState
+	}
+
+	override fun showStatusIcon(iconResId: Int) {
+		super.showStatusIcon(iconResId)
+		if (iconResId == R.drawable.capslock || iconResId == R.drawable.caps) {
+			updateStripLanguageText()
+			return
+		}
+		val typedValue = TypedValue()
+		theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
+		val color = ContextCompat.getColor(this, typedValue.resourceId)
+
+		// Get the drawable and apply the tint
+		val originalDrawable = ContextCompat.getDrawable(this, iconResId)
+		val wrappedDrawable = DrawableCompat.wrap(originalDrawable!!.mutate())
+		DrawableCompat.setTint(wrappedDrawable, color)
+		stripStatusIcon?.setImageDrawable(wrappedDrawable)
+		stripStatusIcon?.visibility = View.VISIBLE
+		stripLanguageText?.visibility = View.GONE
+	}
+
+	override fun hideStatusIcon() {
+		super.hideStatusIcon()
+		updateStripLanguageText()
+	}
+
+	private fun updateStripLanguageText() {
+		if (caps.isLocked()) {
+			stripLanguageText?.text = "EN"
+		} else if (caps.get()) {
+			stripLanguageText?.text = "En"
+		} else {
+			stripLanguageText?.text = "en"
+		}
+		stripStatusIcon?.visibility = View.GONE
+		stripLanguageText?.visibility = View.VISIBLE
 	}
 
 	/**
@@ -801,6 +863,7 @@ class InputMethodService : AndroidInputMethodService() {
 		val context = createDeviceProtectedStorageContext()
 		val preferences = PreferenceManager.getDefaultSharedPreferences(context)
 
+		pickerManager?.setPickerMode(preferences.getBoolean("pref_inline_picker", false))
 		autoCapitalize = preferences.getBoolean("AutoCapitalize", true)
 
 		val lockThreshold = preferences.getInt("ModifierLockThreshold", 250)
