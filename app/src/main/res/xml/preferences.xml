@@ -103,6 +103,11 @@
 			app:title="Use Inline Emoji/Symbol Picker"
 			app:summary="[Experimental] Shows the emoji/picker picker inside the keyboard view instead of a popup."
 			app:defaultValue="false" />
+		<SwitchPreferenceCompat
+			app:key="pref_show_toolbar"
+			app:title="Show Toolbar"
+			app:summary="[Experimental] Show a toolbar with the modifier status."
+			app:defaultValue="false" />
 		<Preference
 			android:key="Reset"
 			android:title="Reset to defaults"

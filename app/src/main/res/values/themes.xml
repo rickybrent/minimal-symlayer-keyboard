@@ -17,6 +17,7 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor">@color/white</item>
         <!-- Customize your theme here. -->
+        <item name="android:colorBackground">@color/white</item>
     </style>
 
     <style name="EinkActionBar" parent="Widget.AppCompat.ActionBar">

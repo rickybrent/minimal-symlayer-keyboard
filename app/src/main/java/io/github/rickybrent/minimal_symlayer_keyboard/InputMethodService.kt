@@ -11,18 +11,15 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.text.InputType
 import android.text.TextUtils
-import android.util.TypedValue
 import android.view.InputDevice
 import android.view.KeyCharacterMap
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethod.SHOW_FORCED
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.TextView
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.DrawableCompat
 import androidx.preference.PreferenceManager
 import java.util.Locale
 import android.inputmethodservice.InputMethodService as AndroidInputMethodService
@@ -153,7 +150,6 @@ class InputMethodService : AndroidInputMethodService() {
 	private var mainInputView: View? = null
 	private var inputViewStrip: View? = null
 	private var stripStatusIcon: ImageView? = null
-    private var stripLanguageText: TextView? = null
 
 	val shift = Modifier()
 	private val alt = Modifier()
@@ -170,6 +166,8 @@ class InputMethodService : AndroidInputMethodService() {
 	private var lastCaps = false
 
 	private var autoCapitalize = false
+	private var showToolbar = false
+	private var isInputViewActive = false
 
 	enum class DeviceType(val source: Int) {
 		TITAN(InputDevice.SOURCE_KEYBOARD),
@@ -256,22 +254,25 @@ class InputMethodService : AndroidInputMethodService() {
 		val inputContainer = mainInputView?.findViewById<FrameLayout>(R.id.input_view_container)
 		this.inputViewStrip = layoutInflater.inflate(R.layout.input_view_strip, null)
 		stripStatusIcon = this.inputViewStrip?.findViewById(R.id.modifier_icon)
-		stripLanguageText = this.inputViewStrip?.findViewById(R.id.language_code_text)
 		inputContainer?.addView(this.inputViewStrip)
+		this.inputViewStrip?.visibility = if (showToolbar) View.VISIBLE else View.GONE
 
 		return mainInputView!!
 	}
 
 	override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
 		super.onStartInputView(info, restarting)
+		isInputViewActive = true
 		updateStatusIconIfNeeded()
 	}
 
 	private fun showEmojiPicker() {
+		if (isInputViewActive.not()) requestShowSelf(SHOW_FORCED)
 		pickerManager?.show()
 	}
 
 	private fun showClipboardHistory() {
+		if (isInputViewActive.not()) requestShowSelf(SHOW_FORCED)
 		pickerManager?.show(PickerManager.ViewType.CLIPBOARD)
 	}
 
@@ -291,6 +292,7 @@ class InputMethodService : AndroidInputMethodService() {
 	 */
 	override fun onFinishInputView(finishingInput: Boolean) {
 		super.onFinishInputView(finishingInput)
+		isInputViewActive = false
 		shift.reset()
 		caps.reset()
 		updateStatusIconIfNeeded()
@@ -319,7 +321,7 @@ class InputMethodService : AndroidInputMethodService() {
 	}
 
 	override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-		if (pickerManager?.isShowing() == true && pickerManager!!.handleKeyEvent(event)) {
+		if (isInputViewActive && pickerManager?.isShowing() == true && pickerManager!!.handleKeyEvent(event)) {
 			return true
 		}
 
@@ -460,8 +462,16 @@ class InputMethodService : AndroidInputMethodService() {
 		return false
 	}
 
+	/**
+	 * Overridden to ensure the input view is shown when our inline picker is active,
+	 * even when a hardware keyboard is connected.
+	 */
+	override fun onEvaluateInputViewShown(): Boolean {
+		return true || super.onEvaluateInputViewShown()
+	}
+
 	override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-		if (pickerManager?.isShowing() == true && pickerManager!!.handleKeyEvent(event)) {
+		if (isInputViewActive && pickerManager?.isShowing() == true && pickerManager!!.handleKeyEvent(event)) {
 			return true
 		}
 
@@ -757,38 +767,14 @@ class InputMethodService : AndroidInputMethodService() {
 
 	override fun showStatusIcon(iconResId: Int) {
 		super.showStatusIcon(iconResId)
-		if (iconResId == R.drawable.capslock || iconResId == R.drawable.caps) {
-			updateStripLanguageText()
-			return
-		}
-		val typedValue = TypedValue()
-		theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
-		val color = ContextCompat.getColor(this, typedValue.resourceId)
 
-		// Get the drawable and apply the tint
-		val originalDrawable = ContextCompat.getDrawable(this, iconResId)
-		val wrappedDrawable = DrawableCompat.wrap(originalDrawable!!.mutate())
-		DrawableCompat.setTint(wrappedDrawable, color)
-		stripStatusIcon?.setImageDrawable(wrappedDrawable)
+		stripStatusIcon?.setImageResource(iconResId)
 		stripStatusIcon?.visibility = View.VISIBLE
-		stripLanguageText?.visibility = View.GONE
 	}
 
 	override fun hideStatusIcon() {
 		super.hideStatusIcon()
-		updateStripLanguageText()
-	}
-
-	private fun updateStripLanguageText() {
-		if (caps.isLocked()) {
-			stripLanguageText?.text = "EN"
-		} else if (caps.get()) {
-			stripLanguageText?.text = "En"
-		} else {
-			stripLanguageText?.text = "en"
-		}
 		stripStatusIcon?.visibility = View.GONE
-		stripLanguageText?.visibility = View.VISIBLE
 	}
 
 	/**
@@ -864,6 +850,8 @@ class InputMethodService : AndroidInputMethodService() {
 		val preferences = PreferenceManager.getDefaultSharedPreferences(context)
 
 		pickerManager?.setPickerMode(preferences.getBoolean("pref_inline_picker", false))
+		showToolbar = preferences.getBoolean("pref_show_toolbar", false)
+
 		autoCapitalize = preferences.getBoolean("AutoCapitalize", true)
 
 		val lockThreshold = preferences.getInt("ModifierLockThreshold", 250)
