@@ -424,6 +424,10 @@ class InputMethodService : AndroidInputMethodService() {
 		if (event.keyCode == MP01_KEYCODE_EMOJI_PICKER || event.keyCode == MP01_KEYCODE_DICTATE) {
 			val tripleMod =
 				if (event.keyCode == MP01_KEYCODE_EMOJI_PICKER) emojiMeta else dotCtrl;
+			if (alt.get()) {
+				tripleMod.activateSkipKeyUp()
+				return false
+			}
 			if (!tripleMod.get()) {
 				tripleMod.onKeyDown();
 			}
@@ -450,7 +454,7 @@ class InputMethodService : AndroidInputMethodService() {
 		// if(sym.get()) { return onSymKey(event, true) }
 		// Handle emojiMeta + key shortcuts.
 		if (emojiMeta.get() && onEmojiMetaShotcut(event)) {
-			emojiMeta.markActivatedForPress()
+			emojiMeta.activateSkipKeyUp()
 			return true
 		}
 
@@ -600,7 +604,7 @@ class InputMethodService : AndroidInputMethodService() {
 	 */
 	private fun onEmojiMetaShotcut(event: KeyEvent): Boolean {
 		// skip the extra simulateKeyTap logic with sendDownUpKeyEvents.
-		emojiMeta.markActivatedForPress()
+		emojiMeta.activateSkipKeyUp()
 		currentInputConnection?.sendKeyEvent(makeKeyEvent(event, emojiMeta.modKeyCode, 0, KeyEvent.ACTION_UP, InputDevice.SOURCE_KEYBOARD))
 		return when (event.keyCode) {
 			KeyEvent.KEYCODE_V -> {
@@ -690,7 +694,7 @@ class InputMethodService : AndroidInputMethodService() {
 
 	private fun simulateKeyTap(code: Int, original: KeyEvent, metaState: Int) {
 		if (code == KeyEvent.KEYCODE_PICTSYMBOLS) {
-			if (!emojiMeta.wasActivatedForPress()) {
+			if (!emojiMeta.skipKeyUp()) {
 				showEmojiPicker()
 				emojiMeta.reset()
 			}

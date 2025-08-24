@@ -114,6 +114,10 @@ class PickerManager(private val context: Context, private val service: InputMeth
         if (event.keyCode == MP01_KEYCODE_EMOJI_PICKER || event.keyCode == KeyEvent.KEYCODE_SYM) {
             return true //
         }
+        if (event.keyCode == KeyEvent.KEYCODE_BACK) {
+            hide()
+            return true
+        }
 
         return false // Don't consume other events
     }
