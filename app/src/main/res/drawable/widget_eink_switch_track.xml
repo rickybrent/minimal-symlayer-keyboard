@@ -7,17 +7,17 @@
         <selector>
             <item android:state_checked="true">
                 <shape android:shape="rectangle">
-                    <solid android:color="@android:color/black" />
+                    <solid android:color="?attr/colorOnPrimary" />
                     <corners android:radius="100dp" />
-                    <stroke android:width="2dp" android:color="@android:color/black" />
+                    <stroke android:width="2dp" android:color="?attr/colorOnPrimary" />
                     <size android:height="16dp" />
                 </shape>
             </item>
             <item>
                 <shape android:shape="rectangle">
-                    <solid android:color="@android:color/white" />
+                    <solid android:color="?attr/colorPrimary" />
                     <corners android:radius="100dp" />
-                    <stroke android:width="2dp" android:color="@android:color/black" />
+                    <stroke android:width="2dp" android:color="?attr/colorOnPrimary" />
                     <size android:height="16dp" />
                 </shape>
             </item>
