@@ -32,4 +32,10 @@
     <style name="EinkPreferenceTheme" parent="@style/PreferenceThemeOverlay.v14.Material">
         <item name="preferenceCategoryStyle">@style/EinkPreferenceCategoryStyle</item>
     </style>
+
+    <style name="AlertDialogTheme" parent="Theme.AppCompat.DayNight.Dialog.Alert">
+		<item name="android:background">@android:color/white</item>
+		<item name="android:textColorPrimary">@android:color/black</item>
+		<item name="colorAccent">@android:color/black</item>
+	</style>
 </resources>

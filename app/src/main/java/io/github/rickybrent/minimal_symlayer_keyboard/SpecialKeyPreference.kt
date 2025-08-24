@@ -1,6 +1,7 @@
 package io.github.rickybrent.minimal_symlayer_keyboard
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Build
 import android.util.AttributeSet
 import android.view.View
@@ -21,6 +22,11 @@ class SpecialKeyPreference(context: Context, attrs: AttributeSet?) : Preference(
     private var tapValuesResId: Int = 0
     private var longPressValuesResId: Int = 0
     private var holdValuesResId: Int = 0
+
+    private val prefs: SharedPreferences by lazy {
+        context.createDeviceProtectedStorageContext()
+            .getSharedPreferences("${context.packageName}_preferences", Context.MODE_PRIVATE)
+    }
 
     init {
         layoutResource = R.layout.settings_widget_key
@@ -63,7 +69,7 @@ class SpecialKeyPreference(context: Context, attrs: AttributeSet?) : Preference(
         }
 
         val values = context.resources.getStringArray(valuesResId)
-        val currentValue = sharedPreferences?.getString(prefKey, values.firstOrNull())
+        val currentValue = prefs?.getString(prefKey, values.firstOrNull())
         val currentIndex = values.indexOf(currentValue)
         if (currentIndex != -1) {
             spinner.setSelection(currentIndex)
@@ -71,7 +77,7 @@ class SpecialKeyPreference(context: Context, attrs: AttributeSet?) : Preference(
 
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                sharedPreferences?.edit()?.putString(prefKey, values[position])?.apply()
+                prefs?.edit()?.putString(prefKey, values[position])?.apply()
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}

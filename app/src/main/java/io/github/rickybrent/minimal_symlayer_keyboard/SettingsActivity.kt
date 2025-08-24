@@ -94,14 +94,13 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 			val context = activity
 			if(context != null) {
 				findPreference<Preference>("Reset")?.onPreferenceClickListener = Preference.OnPreferenceClickListener {
-					AlertDialog.Builder(context)
+					AlertDialog.Builder(context, R.style.AlertDialogTheme)
 						.setTitle("Reset settings")
 						.setMessage("Do you really want to reset all the settings to their default value?")
 						.setIcon(android.R.drawable.ic_dialog_alert)
 						.setPositiveButton(android.R.string.yes, DialogInterface.OnClickListener { dialog, which ->
-							val editor = PreferenceManager.getDefaultSharedPreferences(context).edit()
-							editor.clear()
-							editor.commit()
+							val sharedPreferences = context.createDeviceProtectedStorageContext().getSharedPreferences("${context.packageName}_preferences", Context.MODE_PRIVATE)
+							sharedPreferences.edit { clear() }
 							setPreferencesFromResource(R.xml.preferences, rootKey)
 						})
 						.setNegativeButton(android.R.string.no, null)
