@@ -860,7 +860,6 @@ class InputMethodService : AndroidInputMethodService() {
 		val context = createDeviceProtectedStorageContext()
 		val preferences = PreferenceManager.getDefaultSharedPreferences(context)
 
-		pickerManager?.setPickerMode(preferences.getBoolean("pref_inline_picker", false))
 		showToolbar = preferences.getBoolean("pref_show_toolbar", false)
 		this.inputViewStrip?.visibility = if (showToolbar) View.VISIBLE else View.GONE
 

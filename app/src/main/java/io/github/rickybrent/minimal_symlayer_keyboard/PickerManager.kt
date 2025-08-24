@@ -25,8 +25,6 @@ class PickerManager(private val context: Context, private val service: InputMeth
     private var popupShownTime: Long = 0
     private var initialPressComplete = false
     private var activeTextWatcher: TextWatcher? = null
-    private enum class PickerMode { POPUP, INLINE }
-    private var currentMode = PickerMode.POPUP
     private var currentView: ViewType = ViewType.EMOJI
 
     private var inlineViewContainer: FrameLayout? = null
@@ -49,10 +47,6 @@ class PickerManager(private val context: Context, private val service: InputMeth
 
     init {
         pickerView = View.inflate(service, R.layout.picker_container, null)
-    }
-
-    fun setPickerMode(useInline: Boolean) {
-        currentMode = if (useInline) PickerMode.INLINE else PickerMode.POPUP
     }
 
     fun setInlineViewContainer(container: FrameLayout?) {
@@ -172,39 +166,22 @@ class PickerManager(private val context: Context, private val service: InputMeth
             setupPickerView()
         }
         val height = (context.resources.displayMetrics.heightPixels / 2.25).toInt()
-        if (currentMode == PickerMode.INLINE) {
-            if (isShowing()) {
-                hide()
-                return
-            }
-            switchToView(startingView) // Default to emoji view
-            inlineViewContainer?.let {
-                val layoutParams = it.layoutParams
-                layoutParams.height = height
-                it.layoutParams = layoutParams
-                it.visibility = View.VISIBLE
-            }
+        if (isShowing()) {
+            hide()
             return
         }
-
-        if (popupWindow == null) {
-            setupPopupWindow(height)
+        switchToView(startingView) // Default to emoji view
+        inlineViewContainer?.let {
+            val layoutParams = it.layoutParams
+            layoutParams.height = height
+            it.layoutParams = layoutParams
+            it.visibility = View.VISIBLE
         }
-
-        if (popupWindow?.isShowing == true) {
-            hide()
-        } else {
-            switchToView(startingView) // Default to emoji view
-            popupWindow?.showAtLocation(service.window.window!!.decorView, Gravity.BOTTOM, 0, 0)
-        }
+        return
     }
 
     fun hide() {
-        if (currentMode == PickerMode.INLINE) {
-            inlineViewContainer?.visibility = View.GONE
-        } else {
-            popupWindow?.dismiss()
-        }
+        inlineViewContainer?.visibility = View.GONE
     }
 
     private fun setupPickerView() {
@@ -230,21 +207,6 @@ class PickerManager(private val context: Context, private val service: InputMeth
         clipboardButton.setOnClickListener { switchToView(ViewType.CLIPBOARD) }
 
         pickerView.isFocusableInTouchMode = false
-    }
-
-    private fun setupPopupWindow(height: Int) {
-        popupWindow = PopupWindow(
-            pickerView,
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            height
-        ).apply {
-            // Prevent popupWindow from stealing focus during sym input; we'll forward events from the InputMethodService as needed instead.
-            isFocusable = false
-            isOutsideTouchable = true
-        }
-        popupWindow?.setOnDismissListener {
-            service.clearModifiers()
-        }
     }
 
     private fun switchToView(viewType: ViewType) {
@@ -330,9 +292,6 @@ class PickerManager(private val context: Context, private val service: InputMeth
     }
 
     fun isShowing(): Boolean {
-        if (currentMode == PickerMode.INLINE) {
-            return inlineViewContainer?.visibility == View.VISIBLE
-        }
-        return popupWindow?.isShowing ?: false
+        return inlineViewContainer?.visibility == View.VISIBLE
     }
 }
