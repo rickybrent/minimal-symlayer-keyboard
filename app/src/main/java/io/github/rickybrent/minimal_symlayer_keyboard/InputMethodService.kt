@@ -320,7 +320,8 @@ class InputMethodService : AndroidInputMethodService() {
 	}
 
 	override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-		if (isInputViewActive && pickerManager?.isShowing() == true && pickerManager!!.handleKeyEvent(event)) {
+		if (isInputViewActive && pickerManager?.isShowing() == true) {
+			pickerManager!!.handleKeyEvent(event) // always eat
 			return true
 		}
 
@@ -449,6 +450,7 @@ class InputMethodService : AndroidInputMethodService() {
 		// if(sym.get()) { return onSymKey(event, true) }
 		// Handle emojiMeta + key shortcuts.
 		if (emojiMeta.get() && onEmojiMetaShotcut(event)) {
+			emojiMeta.markActivatedForPress()
 			return true
 		}
 
@@ -470,7 +472,8 @@ class InputMethodService : AndroidInputMethodService() {
 	}
 
 	override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-		if (isInputViewActive && pickerManager?.isShowing() == true && pickerManager!!.handleKeyEvent(event)) {
+		if (isInputViewActive && pickerManager?.isShowing() == true) {
+			pickerManager!!.handleKeyEvent(event) // always eat
 			return true
 		}
 
@@ -597,6 +600,7 @@ class InputMethodService : AndroidInputMethodService() {
 	 */
 	private fun onEmojiMetaShotcut(event: KeyEvent): Boolean {
 		// skip the extra simulateKeyTap logic with sendDownUpKeyEvents.
+		emojiMeta.markActivatedForPress()
 		currentInputConnection?.sendKeyEvent(makeKeyEvent(event, emojiMeta.modKeyCode, 0, KeyEvent.ACTION_UP, InputDevice.SOURCE_KEYBOARD))
 		return when (event.keyCode) {
 			KeyEvent.KEYCODE_V -> {
@@ -686,8 +690,10 @@ class InputMethodService : AndroidInputMethodService() {
 
 	private fun simulateKeyTap(code: Int, original: KeyEvent, metaState: Int) {
 		if (code == KeyEvent.KEYCODE_PICTSYMBOLS) {
-			showEmojiPicker()
-			emojiMeta.reset()
+			if (!emojiMeta.wasActivatedForPress()) {
+				showEmojiPicker()
+				emojiMeta.reset()
+			}
 			return
 		} else if (code == KeyEvent.KEYCODE_VOICE_ASSIST) {
 			startVoiceInput()

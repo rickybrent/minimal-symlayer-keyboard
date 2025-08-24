@@ -145,6 +145,7 @@ class TripleModifier {
 	private var modMode = false
 	private var preventNext = false
 	private var lastTime: Long = 0
+	private var activatedForPress = false
 
 	fun reset() {
 		held = false
@@ -192,6 +193,7 @@ class TripleModifier {
 			lock = false
 		}
 		lastTime = t
+		activatedForPress = false
 	}
 
 	fun onKeyUp() {
@@ -219,5 +221,13 @@ class TripleModifier {
 	fun activateModKey() {
 		if (modKeyCode != 0)
 			modMode = true
+	}
+
+	fun markActivatedForPress() {
+		activatedForPress = true;
+	}
+
+	fun wasActivatedForPress() : Boolean{
+		return activatedForPress;
 	}
 }

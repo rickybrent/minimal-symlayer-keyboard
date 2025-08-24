@@ -111,6 +111,9 @@ class PickerManager(private val context: Context, private val service: InputMeth
             // Forward all input as sym key presses on the sym key view.
             return service.forceSymKeyEvent(event)
         }
+        if (event.keyCode == MP01_KEYCODE_EMOJI_PICKER || event.keyCode == KeyEvent.KEYCODE_SYM) {
+            return true //
+        }
 
         return false // Don't consume other events
     }
