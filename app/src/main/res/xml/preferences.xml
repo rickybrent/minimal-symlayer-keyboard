@@ -98,13 +98,6 @@
 			/>
 	</PreferenceCategory>
 	<PreferenceCategory android:title="Other">
-		<SwitchPreference
-			android:key="pref_show_toolbar"
-			android:defaultValue="false"
-			android:title="Show Toolbar"
-			android:summary="[Experimental] Show a toolbar with the modifier status."
-			app:widgetLayout="@layout/settings_widget_switch" />
-			/>
 		<Preference
 			android:key="Reset"
 			android:title="Reset to defaults"
