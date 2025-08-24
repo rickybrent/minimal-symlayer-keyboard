@@ -67,6 +67,13 @@
 			android:summary="Disable multipress for consonants (like ç or ß)"
 			app:widgetLayout="@layout/settings_widget_switch"
 			/>
+		<SwitchPreference
+			android:key="pref_enable_ligatures"
+			android:title="Enable ligatures"
+			android:summary="Automatically combine characters like 'ae' into 'æ'"
+			android:defaultValue="false"
+			app:widgetLayout="@layout/settings_widget_switch"
+			/>
 	</PreferenceCategory>
 	<PreferenceCategory android:title="Timing">
 		<SeekBarPreference

@@ -5,6 +5,8 @@
 		<item>German</item>
 		<item>Portuguese</item>
 		<item>French+ES/DE/PT</item>
+		<item>Danish-Norwegian</item>
+		<item>Swedish-Finnish</item>
 		<item>áàâäã</item>
 		<item>àáâäã</item>
 	</string-array>
@@ -14,6 +16,8 @@
 		<item>de</item>
 		<item>pt</item>
 		<item>fr-ext</item>
+		<item>dk-no</item>
+		<item>se-fi</item>
 		<item>order1</item>
 		<item>order2</item>
 	</string-array>

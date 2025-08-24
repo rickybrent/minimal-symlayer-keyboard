@@ -126,6 +126,19 @@ val templates = hashMapOf(
 		KeyEvent.KEYCODE_C to arrayOf('ç', MPSUBST_BYPASS),
 		KeyEvent.KEYCODE_SPACE to arrayOf(MPSUBST_STR_DOTSPACE)
 	),
+	"dk-no" to hashMapOf(
+		KeyEvent.KEYCODE_A to arrayOf('å', 'æ', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_O to arrayOf('ø', 'ö', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_S to arrayOf('ß', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_SPACE to arrayOf(MPSUBST_STR_DOTSPACE)
+	),
+	"se-fi" to hashMapOf(
+		KeyEvent.KEYCODE_Q to arrayOf('å', 'ä', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_A to arrayOf('ä', 'å', 'æ', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_O to arrayOf('ö', 'ø', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_S to arrayOf('ß', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_SPACE to arrayOf(MPSUBST_STR_DOTSPACE)
+	),
 	"order1" to hashMapOf( // áàâäã
 		KeyEvent.KEYCODE_A to arrayOf('´', '`', '^', '¨', '~', MPSUBST_BYPASS),
 		KeyEvent.KEYCODE_E to arrayOf('´', '`', '^', '¨', '~', MPSUBST_BYPASS),
@@ -878,6 +891,8 @@ class InputMethodService : AndroidInputMethodService() {
 		multipress.ignoreFirstLevel = !preferences.getBoolean("UseFirstLevel", true)
 		multipress.ignoreDotSpace = !preferences.getBoolean("DotSpace", true)
 		multipress.ignoreConsonantsOnFirstLevel = preferences.getBoolean("FirstLevelOnlyVowels", false)
+		multipress.ligaturesEnabled = preferences.getBoolean("pref_enable_ligatures", false)
+
 
 		val templateId = preferences.getString("FirstLevelTemplate", "fr")
 		if(templates.containsKey(templateId)) {

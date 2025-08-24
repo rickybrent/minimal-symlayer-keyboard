@@ -71,6 +71,16 @@ class MultipressController(val substitutions: Array<HashMap<Int, Array<Char>>>) 
 	private var lastSubstitution: Char = MPSUBST_BYPASS
 
 	/**
+	 * Ligature support
+	 */
+	var ligaturesEnabled = false
+	private var lastPrintedChar: Char = '\u0000'
+	private val ligatureMap = mapOf(
+		"ae" to 'æ', "oe" to 'œ',
+		"AE" to 'Æ', "OE" to 'Œ',
+	)
+
+	/**
 	 * Reset the state to default.
 	 */
 	fun reset() {
@@ -86,6 +96,39 @@ class MultipressController(val substitutions: Array<HashMap<Int, Array<Char>>>) 
 	 * @return A character for the substitution, or `MPSUBST_NOTHING` if no action should occur, or `MPSUBST_STR_*` if a specific string must be used.
 	 */
 	fun process(e: KeyEvent, metaState: Int): Char {
+		if (e.isPrintingKey) {
+			val currentChar = e.getUnicodeChar(metaState).toChar()
+			if (ligaturesEnabled && lastPrintedChar != '\u0000') {
+				val sequence = "$lastPrintedChar$currentChar"
+				if (ligatureMap.containsKey(sequence)) {
+					val ligature = ligatureMap[sequence]!!
+					lastPrintedChar = ligature // The new char on screen is the ligature
+					reset() // reset multipress state
+					return ligature
+				}
+			}
+		}
+
+		val result = processMultipress(e, metaState)
+
+		// Update lastPrintedChar based on what will be printed
+		if (e.isPrintingKey) {
+			if (result == MPSUBST_BYPASS) {
+				lastPrintedChar = e.getUnicodeChar(metaState).toChar()
+			} else if (result != MPSUBST_NOTHING && result != MPSUBST_STR_DOTSPACE) {
+				lastPrintedChar = result
+			} else {
+				lastPrintedChar = '\u0000'
+			}
+		} else if (e.keyCode == KeyEvent.KEYCODE_DEL || e.keyCode == KeyEvent.KEYCODE_FORWARD_DEL) {
+			lastPrintedChar = '\u0000' // Simplistic assumption that one char is deleted
+		}
+
+
+		return result
+	}
+
+	private fun processMultipress(e: KeyEvent, metaState: Int): Char {
 		val keyCode = e.keyCode
 		val t = System.currentTimeMillis()
 		if(last == keyCode && t - lastTime < multipressThreshold) {
