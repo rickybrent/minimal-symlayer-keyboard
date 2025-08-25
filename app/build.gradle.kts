@@ -12,12 +12,13 @@ android {
 		minSdk = 29
 		targetSdk = 33
 		versionCode = 1
-		versionName = "0.77-beta1"
+		versionName = "0.77.2"
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 	}
 
 	buildTypes {
-        debug {
+		buildFeatures { buildConfig = true }
+		debug {
 			applicationIdSuffix = ".dev"
 		}
 		release {

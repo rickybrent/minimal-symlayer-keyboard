@@ -112,5 +112,12 @@
 		<Preference
 			android:title="About"
 			app:fragment="io.github.rickybrent.minimal_symlayer_keyboard.SettingsActivity$AboutFragment" />
+		<SwitchPreference
+				android:key="pref_show_toolbar"
+				android:defaultValue="false"
+				android:title="Show Toolbar"
+				android:summary="[Experimental] Show a toolbar with the modifier status."
+				android:visible="false"
+				app:widgetLayout="@layout/settings_widget_switch" />
 	</PreferenceCategory>
 </PreferenceScreen>

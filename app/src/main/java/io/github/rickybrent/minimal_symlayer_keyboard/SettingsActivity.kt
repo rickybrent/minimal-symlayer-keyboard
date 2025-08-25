@@ -93,6 +93,9 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 			setPreferencesFromResource(R.xml.preferences, rootKey)
 			val context = activity
 			if(context != null) {
+				if (BuildConfig.DEBUG) {
+					findPreference<Preference>("pref_show_toolbar")?.isVisible = true
+				}
 				findPreference<Preference>("Reset")?.onPreferenceClickListener = Preference.OnPreferenceClickListener {
 					AlertDialog.Builder(context, R.style.AlertDialogTheme)
 						.setTitle("Reset settings")

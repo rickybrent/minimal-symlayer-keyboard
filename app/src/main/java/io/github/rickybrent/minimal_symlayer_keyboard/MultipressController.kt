@@ -77,6 +77,7 @@ class MultipressController(val substitutions: Array<HashMap<Int, Array<Char>>>) 
 	private var lastPrintedChar: Char = '\u0000'
 	private val ligatureMap = mapOf(
 		"ae" to 'æ', "oe" to 'œ',
+		"Ae" to 'Æ', "Oe" to 'Œ',
 		"AE" to 'Æ', "OE" to 'Œ',
 	)
 
