@@ -170,6 +170,7 @@ class InputMethodService : AndroidInputMethodService() {
 	private val dotCtrl = TripleModifier()
 	private val emojiMeta = TripleModifier()
 	private val caps = Modifier()
+	private val cyrillicLayer = CyrillicLayerModifier()
 
 	private var lastShift = false
 	private var lastAlt = false
@@ -177,6 +178,7 @@ class InputMethodService : AndroidInputMethodService() {
 	private var lastDotCtrl = false
 	private var lastEmojiMeta = false
 	private var lastCaps = false
+	private var lastCyrillicLayer = false
 
 	private var autoCapitalize = false
 	private var showToolbar = false
@@ -346,12 +348,21 @@ class InputMethodService : AndroidInputMethodService() {
 					alt.onKeyDown()
 					updateStatusIconIfNeeded(true)
 				}
-				KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_SHIFT_RIGHT  -> {
+				KeyEvent.KEYCODE_SHIFT_LEFT -> {
 					if (caps.get()) {
 						caps.reset()
 					} else {
 						shift.onKeyDown()
 					}
+					updateStatusIconIfNeeded(true)
+				}
+				KeyEvent.KEYCODE_SHIFT_RIGHT -> {
+					if (caps.get()) {
+						caps.reset()
+					} else {
+						shift.onKeyDown()
+					}
+					cyrillicLayer.onRightShiftDown()
 					updateStatusIconIfNeeded(true)
 				}
 				KeyEvent.KEYCODE_SYM -> {
@@ -419,7 +430,22 @@ class InputMethodService : AndroidInputMethodService() {
 
 		// Print something if it is a simple printing key press
 		if((event.isPrintingKey || event.keyCode == KeyEvent.KEYCODE_SPACE || (event.keyCode == KeyEvent.KEYCODE_ENTER && shift.get()))) {
-			val str = event.getUnicodeChar(enhancedMetaState(event)).toChar().toString()
+			val isShifted = shift.get() || caps.get()
+			val str = if (cyrillicLayer.isActive()) {
+				if (alt.get() && CyrillicMappings.hasAltCyrillicMapping(event.keyCode)) {
+					CyrillicMappings.getAltCyrillicChar(event.keyCode, isShifted)?.toString()
+						?: event.getUnicodeChar(enhancedMetaState(event)).toChar().toString()
+				} else if (CyrillicMappings.hasCyrillicMapping(event.keyCode)) {
+					CyrillicMappings.getCyrillicChar(event.keyCode, isShifted)?.toString()
+						?: event.getUnicodeChar(enhancedMetaState(event)).toChar().toString()
+				} else {
+					// No mapping: fall back to default Latin character
+					event.getUnicodeChar(enhancedMetaState(event)).toChar().toString()
+				}
+			} else {
+				// Cyrillic layer not active: default Latin behavior
+				event.getUnicodeChar(enhancedMetaState(event)).toChar().toString()
+			}
 			currentInputConnection?.commitText(str, 1)
 
 			consumeModifierNext()
@@ -500,8 +526,17 @@ class InputMethodService : AndroidInputMethodService() {
 				alt.onKeyUp()
 				updateStatusIconIfNeeded(true)
 			}
-			KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_SHIFT_RIGHT  -> {
+			KeyEvent.KEYCODE_SHIFT_LEFT -> {
 				shift.onKeyUp()
+				updateStatusIconIfNeeded(true)
+			}
+			KeyEvent.KEYCODE_SHIFT_RIGHT -> {
+				shift.onKeyUp()
+				cyrillicLayer.onRightShiftUp()
+				// Check if Cyrillic layer was toggled and provide haptic feedback
+				if (cyrillicLayer.wasJustToggled()) {
+					vibrate()
+				}
 				updateStatusIconIfNeeded(true)
 			}
 			KeyEvent.KEYCODE_SYM -> {
@@ -760,7 +795,8 @@ class InputMethodService : AndroidInputMethodService() {
 		val ctrlState = dotCtrl.get()
 		val capsState = caps.get()
 		val metaState = emojiMeta.get()
-		if(force || symState != lastSym || altState != lastAlt || shiftState != lastShift || capsState != lastCaps || ctrlState != lastDotCtrl || metaState != lastEmojiMeta) {
+		val cyrillicState = cyrillicLayer.isActive()
+		if(force || symState != lastSym || altState != lastAlt || shiftState != lastShift || capsState != lastCaps || ctrlState != lastDotCtrl || metaState != lastEmojiMeta || cyrillicState != lastCyrillicLayer) {
 			if(sym.get()) {
 				if (shift.get()) {
 					showStatusIcon(R.drawable.symshift)
@@ -777,6 +813,8 @@ class InputMethodService : AndroidInputMethodService() {
 				showStatusIcon(if(shift.isLocked()) R.drawable.shiftlock else R.drawable.shift)
 			} else if(caps.get()) {
 				showStatusIcon(if(caps.isLocked()) R.drawable.capslock else R.drawable.caps)
+			} else if(cyrillicLayer.isActive()) {
+				showStatusIcon(R.drawable.cyrillic)
 			} else {
 				hideStatusIcon()
 			}
@@ -787,6 +825,7 @@ class InputMethodService : AndroidInputMethodService() {
 		lastDotCtrl = ctrlState
 		lastCaps = capsState
 		lastEmojiMeta = metaState
+		lastCyrillicLayer = cyrillicState
 	}
 
 	override fun showStatusIcon(iconResId: Int) {
@@ -967,6 +1006,7 @@ class InputMethodService : AndroidInputMethodService() {
 		dotCtrl.reset()
 		emojiMeta.reset()
 		caps.reset()
+		cyrillicLayer.reset()
 		updateStatusIconIfNeeded(true)
 	}
 }
