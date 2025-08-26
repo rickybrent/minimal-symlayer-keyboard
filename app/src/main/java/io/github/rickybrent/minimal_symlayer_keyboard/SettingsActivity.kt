@@ -7,35 +7,38 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.view.Menu
-import android.view.MenuItem
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.SearchView
+import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.preference.Preference
+import androidx.preference.PreferenceDataStore
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceGroup
-import androidx.preference.PreferenceManager
-import androidx.preference.PreferenceDataStore
-import androidx.core.content.edit
 
 class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
+
+	private lateinit var settingsFilter: EditText
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.settings_activity)
 		setSupportActionBar(findViewById(R.id.toolbar))
+		supportActionBar?.setDisplayShowHomeEnabled(false)
+		supportActionBar?.setIcon(R.mipmap.ic_launcher)
+		supportActionBar?.setDisplayHomeAsUpEnabled(false)
+
 		if (savedInstanceState == null) {
 			supportFragmentManager
 				.beginTransaction()
 				.replace(R.id.settings, SettingsFragment())
 				.commit()
 		}
-		supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
 		if (!isImeEnabled()) {
 			showEnableImeDialog()
@@ -44,6 +47,42 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 		findViewById<ImageView>(R.id.keyboard_switcher).setOnClickListener {
 			val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
 			imm.showInputMethodPicker()
+		}
+
+		settingsFilter = findViewById(R.id.settings_filter)
+		val filterActionButton = findViewById<ImageView>(R.id.filter_action_button)
+		settingsFilter.hint = "Filter (${getString(R.string.ime_settings)})..."
+
+		settingsFilter.addTextChangedListener(object : TextWatcher {
+			override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+			override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+				val fragment = supportFragmentManager.findFragmentById(R.id.settings) as? SettingsFragment
+				fragment?.filterPreferences(s.toString())
+				if (s.isNullOrEmpty()) {
+					filterActionButton.setImageResource(R.drawable.ic_menu_back)
+				} else {
+					filterActionButton.setImageResource(R.drawable.ic_clear_text)
+				}
+			}
+
+			override fun afterTextChanged(s: Editable?) {}
+		})
+
+		filterActionButton.setOnClickListener {
+			if (settingsFilter.text.isEmpty()) {
+				onBackPressedDispatcher.onBackPressed()
+			} else {
+				settingsFilter.text.clear()
+			}
+		}
+	}
+
+	override fun onBackPressed() {
+		if (settingsFilter.text.isNotEmpty()) {
+			settingsFilter.text.clear()
+		} else {
+			super.onBackPressed()
 		}
 	}
 
@@ -70,38 +109,11 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 			.show()
 	}
 
-
 	override fun onSupportNavigateUp(): Boolean {
 		if (supportFragmentManager.popBackStackImmediate()) {
 			return true
 		}
 		return super.onSupportNavigateUp()
-	}
-
-	override fun onOptionsItemSelected(item: MenuItem): Boolean {
-		if (item.itemId == android.R.id.home) {
-			onBackPressedDispatcher.onBackPressed()
-			return true
-		}
-		return super.onOptionsItemSelected(item)
-	}
-
-	override fun onCreateOptionsMenu(menu: Menu): Boolean {
-		menuInflater.inflate(R.menu.settings_menu, menu)
-		val searchItem = menu.findItem(R.id.action_search)
-		val searchView = searchItem.actionView as SearchView
-		searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-			override fun onQueryTextSubmit(query: String?): Boolean {
-				return false
-			}
-
-			override fun onQueryTextChange(newText: String?): Boolean {
-				val fragment = supportFragmentManager.findFragmentById(R.id.settings) as? SettingsFragment
-				fragment?.filterPreferences(newText)
-				return true
-			}
-		})
-		return true
 	}
 
 	override fun onPreferenceStartFragment(
@@ -129,7 +141,7 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 			preferenceManager.preferenceDataStore = DeviceProtectedPreferenceDataStore(requireContext())
 			setPreferencesFromResource(R.xml.preferences, rootKey)
 			val context = activity
-			if(context != null) {
+			if (context != null) {
 				if (BuildConfig.DEBUG) {
 					findPreference<Preference>("pref_show_toolbar")?.isVisible = true
 				}
@@ -139,7 +151,11 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 						.setMessage("Do you really want to reset all the settings to their default value?")
 						.setIcon(android.R.drawable.ic_dialog_alert)
 						.setPositiveButton(android.R.string.yes, DialogInterface.OnClickListener { dialog, which ->
-							val sharedPreferences = context.createDeviceProtectedStorageContext().getSharedPreferences("${context.packageName}_preferences", Context.MODE_PRIVATE)
+							val sharedPreferences =
+								context.createDeviceProtectedStorageContext().getSharedPreferences(
+									"${context.packageName}_preferences",
+									Context.MODE_PRIVATE
+								)
 							sharedPreferences.edit { clear() }
 							setPreferencesFromResource(R.xml.preferences, rootKey)
 						})
@@ -253,7 +269,7 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 			val licenseDisplayNames =
 				licenses.map { "${it.componentName} - ${it.licenseName}" }.toTypedArray()
 
-			AlertDialog.Builder(requireContext())
+			AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme)
 				.setTitle("Third-Party Licenses")
 				.setItems(licenseDisplayNames) { _, which ->
 					val selectedLicense = licenses[which]
@@ -270,7 +286,7 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 				"Could not load license."
 			}
 
-			AlertDialog.Builder(requireContext())
+			AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme)
 				.setTitle(title)
 				.setMessage(licenseText)
 				.setPositiveButton(android.R.string.ok, null)
