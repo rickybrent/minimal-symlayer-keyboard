@@ -43,14 +43,14 @@ class CyrillicLayerTest {
 	@Test
 	fun testCyrillicMappings() {
 		// Test lowercase mappings
-		assertEquals('а', CyrillicMappings.getCyrillicChar(android.view.KeyEvent.KEYCODE_A, false))
-		assertEquals('б', CyrillicMappings.getCyrillicChar(android.view.KeyEvent.KEYCODE_B, false))
-		assertEquals('в', CyrillicMappings.getCyrillicChar(android.view.KeyEvent.KEYCODE_V, false))
-		
+		assertEquals('ф', CyrillicMappings.getCyrillicChar(android.view.KeyEvent.KEYCODE_A, false))
+		assertEquals('и', CyrillicMappings.getCyrillicChar(android.view.KeyEvent.KEYCODE_B, false))
+		assertEquals('м', CyrillicMappings.getCyrillicChar(android.view.KeyEvent.KEYCODE_V, false))
+
 		// Test uppercase mappings
-		assertEquals('А', CyrillicMappings.getCyrillicChar(android.view.KeyEvent.KEYCODE_A, true))
-		assertEquals('Б', CyrillicMappings.getCyrillicChar(android.view.KeyEvent.KEYCODE_B, true))
-		assertEquals('В', CyrillicMappings.getCyrillicChar(android.view.KeyEvent.KEYCODE_V, true))
+		assertEquals('Ф', CyrillicMappings.getCyrillicChar(android.view.KeyEvent.KEYCODE_A, true))
+		assertEquals('И', CyrillicMappings.getCyrillicChar(android.view.KeyEvent.KEYCODE_B, true))
+		assertEquals('М', CyrillicMappings.getCyrillicChar(android.view.KeyEvent.KEYCODE_V, true))
 		
 		// Test non-existent mappings
 		assertNull(CyrillicMappings.getCyrillicChar(android.view.KeyEvent.KEYCODE_F1, false))

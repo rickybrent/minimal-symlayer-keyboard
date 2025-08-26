@@ -180,6 +180,8 @@ class InputMethodService : AndroidInputMethodService() {
 	private var lastCaps = false
 	private var lastCyrillicLayer = false
 
+	private var cyrillicLayerToggleEnabled = false
+
 	private var autoCapitalize = false
 	private var showToolbar = false
 	private var isInputViewActive = false
@@ -362,7 +364,8 @@ class InputMethodService : AndroidInputMethodService() {
 					} else {
 						shift.onKeyDown()
 					}
-					cyrillicLayer.onRightShiftDown()
+					if (cyrillicLayerToggleEnabled)
+						cyrillicLayer.onRightShiftDown()
 					updateStatusIconIfNeeded(true)
 				}
 				KeyEvent.KEYCODE_SYM -> {
@@ -532,11 +535,12 @@ class InputMethodService : AndroidInputMethodService() {
 			}
 			KeyEvent.KEYCODE_SHIFT_RIGHT -> {
 				shift.onKeyUp()
-				cyrillicLayer.onRightShiftUp()
-				// Check if Cyrillic layer was toggled and provide haptic feedback
-				if (cyrillicLayer.wasJustToggled()) {
-					vibrate()
-				}
+				if (cyrillicLayerToggleEnabled)
+					cyrillicLayer.onRightShiftUp()
+					// Check if Cyrillic layer was toggled and provide haptic feedback
+					if (cyrillicLayer.wasJustToggled()) {
+						vibrate()
+					}
 				updateStatusIconIfNeeded(true)
 			}
 			KeyEvent.KEYCODE_SYM -> {
@@ -805,16 +809,19 @@ class InputMethodService : AndroidInputMethodService() {
 				}
 			} else if(emojiMeta.get()) {
 				showStatusIcon(R.drawable.meta)
-			} else if(alt.get()) {
-				showStatusIcon(if (alt.isLocked()) R.drawable.altlock else R.drawable.alt)
 			} else if (dotCtrl.get()) {
 				showStatusIcon(if (dotCtrl.isLocked()) R.drawable.ctrllock else R.drawable.ctrl)
+			} else if(cyrillicLayer.isActive()) {
+				if(shift.get() || caps.get())
+					showStatusIcon(if (alt.get()) R.drawable.cyrillicshiftalt else R.drawable.cyrillicshift)
+				else
+					showStatusIcon(if (alt.get()) R.drawable.cyrillicalt else R.drawable.cyrillic)
+			} else if(alt.get()) {
+				showStatusIcon(if (alt.isLocked()) R.drawable.altlock else R.drawable.alt)
 			} else if(shift.get()) {
 				showStatusIcon(if(shift.isLocked()) R.drawable.shiftlock else R.drawable.shift)
 			} else if(caps.get()) {
 				showStatusIcon(if(caps.isLocked()) R.drawable.capslock else R.drawable.caps)
-			} else if(cyrillicLayer.isActive()) {
-				showStatusIcon(R.drawable.cyrillic)
 			} else {
 				hideStatusIcon()
 			}
@@ -932,6 +939,7 @@ class InputMethodService : AndroidInputMethodService() {
 		multipress.ignoreConsonantsOnFirstLevel = preferences.getBoolean("FirstLevelOnlyVowels", false)
 		multipress.ligaturesEnabled = preferences.getBoolean("pref_enable_ligatures", false)
 
+		cyrillicLayerToggleEnabled = preferences.getBoolean("pref_enable_cyrillic_layer", false)
 
 		val templateId = preferences.getString("FirstLevelTemplate", "fr")
 		if(templates.containsKey(templateId)) {
@@ -945,6 +953,8 @@ class InputMethodService : AndroidInputMethodService() {
 		emojiMeta.shortPressKeyCode = preferenceToKeyCode(preferences.getString("pref_emojimeta_tap", "emoji"))
 		emojiMeta.longPressKeyCode = preferenceToKeyCode(preferences.getString("pref_emojimeta_long_press", "0"))
 		emojiMeta.modKeyCode = preferenceToKeyCode(preferences.getString("pref_emojimeta_hold", "meta"))
+
+		// TODO: Separate modifier and special-key logic and add better handling for sym and right shift.
 	}
 
 	private fun preferenceToKeyCode(preferenceValue: String?): Int {

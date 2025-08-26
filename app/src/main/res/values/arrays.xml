@@ -78,4 +78,25 @@
 		<item>meta</item>
 		<item>none</item>
 	</string-array>
+
+	<string-array name="shiftright_tap_entries">
+		<item>Shift</item>
+	</string-array>
+	<string-array name="shiftright_tap_values">
+		<item>shift</item>
+	</string-array>
+	<string-array name="shiftright_long_press_entries">
+		<item>—</item>
+		<item>Cyrillic layer (Toggle)</item>
+	</string-array>
+	<string-array name="shiftright_long_press_values">
+		<item>none</item>
+		<item>cyrillic</item>
+	</string-array>
+	<string-array name="shiftright_hold_entries">
+		<item>Shift + [Key]</item>
+	</string-array>
+	<string-array name="shiftright_hold_values">
+		<item>shift</item>
+	</string-array>
 </resources>
