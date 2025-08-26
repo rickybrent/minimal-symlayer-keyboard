@@ -43,7 +43,7 @@
 			app:holdEntries="@array/emojimeta_hold_entries"
 			app:holdValues="@array/emojimeta_hold_values" />
 	</PreferenceCategory>
-	<PreferenceCategory android:title="Accented characters">
+	<PreferenceCategory android:title="Additional characters">
 		<SwitchPreference
 			android:key="UseFirstLevel"
 			android:defaultValue="false"
@@ -71,6 +71,13 @@
 			android:key="pref_enable_ligatures"
 			android:title="Enable ligatures"
 			android:summary="Automatically combine characters like 'ae' into 'æ'"
+			android:defaultValue="false"
+			app:widgetLayout="@layout/settings_widget_switch"
+			/>
+		<SwitchPreference
+			android:key="pref_enable_cyrillic_layer"
+			android:title="Enable Cyrillic Layer"
+			android:summary="Long press right-shift to toggle Cyrillic layer"
 			android:defaultValue="false"
 			app:widgetLayout="@layout/settings_widget_switch"
 			/>
