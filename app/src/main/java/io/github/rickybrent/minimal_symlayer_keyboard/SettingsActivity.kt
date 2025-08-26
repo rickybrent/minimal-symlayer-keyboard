@@ -51,7 +51,7 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 
 		settingsFilter = findViewById(R.id.settings_filter)
 		val filterActionButton = findViewById<ImageView>(R.id.filter_action_button)
-		settingsFilter.hint = "Filter (${getString(R.string.ime_settings)})..."
+		settingsFilter.hint = "Filter settings..."
 
 		settingsFilter.addTextChangedListener(object : TextWatcher {
 			override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -100,7 +100,7 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 	private fun showEnableImeDialog() {
 		AlertDialog.Builder(this, R.style.AlertDialogTheme)
 			.setTitle("Enable Keyboard")
-			.setMessage("Minimal SymLayer Keyboard is not enabled. Please enable it in the settings to use it.")
+			.setMessage("${getString(R.string.app_name)} is not enabled. Please enable it in the settings to use it.")
 			.setPositiveButton("Enable") { _, _ ->
 				val intent = Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)
 				startActivity(intent)

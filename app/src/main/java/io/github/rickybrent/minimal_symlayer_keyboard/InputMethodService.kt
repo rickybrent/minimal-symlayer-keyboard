@@ -340,6 +340,10 @@ class InputMethodService : AndroidInputMethodService() {
 		if (isInputViewActive && pickerManager?.isShowing() == true) {
 			pickerManager!!.handleKeyEvent(event) // always eat
 			return true
+		} else if (event.keyCode == KeyEvent.KEYCODE_BACK) {
+			// directly send to the app instead of dismissing our (invisible) keyboard.
+			sendDownUpKeyEvents(event.keyCode)
+			return true
 		}
 
 		updateDeviceType(event)

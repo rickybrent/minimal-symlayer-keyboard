@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Minimal SymLayer Keyboard - Dev</string>
-    <string name="ime_label">Minimal SymLayer Input - Dev</string>
-    <string name="ime_settings">Minimal SymLayer Settings - Dev</string>
+    <string name="app_name">Minimal SymLayer Kbd - Dev</string>
+    <string name="ime_label">Minimal SymLayer Kbd - Dev</string>
+    <string name="ime_settings">Minimal SymLayer Kbd Settings - Dev</string>
 </resources>
