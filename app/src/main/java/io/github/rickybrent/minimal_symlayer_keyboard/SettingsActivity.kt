@@ -6,8 +6,12 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
+import android.widget.ImageView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
@@ -32,7 +36,40 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 				.commit()
 		}
 		supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+		if (!isImeEnabled()) {
+			showEnableImeDialog()
+		}
+
+		findViewById<ImageView>(R.id.keyboard_switcher).setOnClickListener {
+			val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+			imm.showInputMethodPicker()
+		}
 	}
+
+	private fun isImeEnabled(): Boolean {
+		val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+		val enabledImes = imm.enabledInputMethodList
+		for (ime in enabledImes) {
+			if (ime.packageName == packageName) {
+				return true
+			}
+		}
+		return false
+	}
+
+	private fun showEnableImeDialog() {
+		AlertDialog.Builder(this, R.style.AlertDialogTheme)
+			.setTitle("Enable Keyboard")
+			.setMessage("Minimal SymLayer Keyboard is not enabled. Please enable it in the settings to use it.")
+			.setPositiveButton("Enable") { _, _ ->
+				val intent = Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)
+				startActivity(intent)
+			}
+			.setNegativeButton("Cancel", null)
+			.show()
+	}
+
 
 	override fun onSupportNavigateUp(): Boolean {
 		if (supportFragmentManager.popBackStackImmediate()) {
