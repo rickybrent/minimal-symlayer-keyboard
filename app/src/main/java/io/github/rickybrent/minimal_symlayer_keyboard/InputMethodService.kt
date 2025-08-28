@@ -20,6 +20,7 @@ import android.view.inputmethod.InputMethod.SHOW_FORCED
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.preference.PreferenceManager
 import java.util.Locale
 import android.inputmethodservice.InputMethodService as AndroidInputMethodService
@@ -980,6 +981,8 @@ class InputMethodService : AndroidInputMethodService() {
 		val voiceImeId = findVoiceIme()
 		if (voiceImeId != null) {
 			imm.setInputMethod(token, voiceImeId)
+		} else {
+			Toast.makeText(this, "No voice IME found.", Toast.LENGTH_SHORT).show()
 		}
 	}
 
