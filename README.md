@@ -30,7 +30,7 @@ This fork builds upon the original's solid foundation with several new features 
             * **Long Press & Release**: Inserts a 0 (also triggered by pressing while holding Alt).
 * **Sym layer updated for the MP01**: The keys on the sym layer have been updated and changed to avoid duplicating any of the alt-keys already available, and to make it possible to enter certain common keys missing from the MP01's alt layer (such as parenthesis.)
 
-The Multipress for accented characters feature from the original project is disabled by default, but is still included.
+The Multipress for accented characters feature from the original project is disabled by default, but is still included and has been extended with a ligature option and Scandinavian templates.
 
 
 ## Installation
@@ -73,7 +73,7 @@ The Cut/Copy/Paste actions are only available when no modifier is pressed.
 The layouts below are from the original TitanPocketKeyboard project. **Note that the Sym-layer mapping and some long-press characters have been changed in this fork to better suit the Minimal Phone MP01.** The new Sym-layer preview feature is the best way to explore the current layout.
 
 
-### Accented Characters (Multipress)
+### Additional Characters (Multipress)
 
 You can enable multipress and select a language-specific template for characters accessed via multiple quick presses.
 
@@ -120,6 +120,22 @@ You can enable multipress and select a language-specific template for characters
 | `u` | `ú` |
 | `c` | `ç` |
 
+#### Danish-Norwegian
+
+| Key | Multipress |
+|-----| --- |
+| `a` | `å`, `æ` |
+| `o` | `ø`, `ö` |
+| `s` | `ß` |
+
+#### Swedish-Finnish
+
+| Key | Multipress    |
+| --- |---------------|
+| `a` | `ä`, `å`, `æ` |
+| `o` | `ö`, `ø`,     |
+| `s` | `ß`           |
+
 #### French + ES/DE/PT (default)
 
 | Key | Multipress |
@@ -150,6 +166,18 @@ You can enable multipress and select a language-specific template for characters
 | `i` | `ì`, `í`, `î`, `ï`, `ĩ` |
 | `o` | `ò`, `ó`, `ô`, `ö`, `õ` |
 | `u` | `ù`, `ú`, `û`, `ü`, `ũ` |
+
+#### Ligatures
+
+| Key  | Multipress   |
+|------|--------------|
+| `ae` | `æ` |
+| `oe` | `œ`     |
+
+#### Cyrillic Layer
+
+A set of [Cyrillic Layers](readme-symbehavior-mp01-cyrillic.png) based on the Gemini PDA layout can enabled and toggled with a long press on the right shift key. 
+
 
 ### Additional Characters (after Long Press)
 
@@ -186,6 +214,10 @@ The first column is the character printed on the key
 | **`b`** | **`.`**            | `%`               | `…`, `ß`, `∫`, `♭`                |
 | **`n`** | **`,`**            | `?`               | `ñ`, `¬`, `∩`                     |
 | **`m`** | **`?`**            | `,`               | `$`, `€`, `£`, `¿`                |
+
+# Voice Input
+
+Toggling voice input will switch to a voice-input IME if one is installed and enabled, e.g. Google Voice Input (added with [Gboard](https://play.google.com/store/apps/details?id=com.google.android.inputmethod.latin)) or [Whisper Plus](https://github.com/woheller69/whisperIMEplus).
 
 # Customizing and contributing
 
