@@ -11,6 +11,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.text.InputType
 import android.text.TextUtils
+import android.util.Log
 import android.view.InputDevice
 import android.view.KeyCharacterMap
 import android.view.KeyEvent
@@ -777,9 +778,9 @@ class InputMethodService : AndroidInputMethodService() {
 			onSymKey(event, true)
 			onSymKey(event, false)
 		} else {
-			val altChar = event.getUnicodeChar(code).toString()
-			if (multipress.overrideAltKeys && altChar != "") {
-				currentInputConnection?.commitText(altChar, 1)
+			val charInt = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD).get(code, 0)
+			if (multipress.overrideAltKeys && charInt != 0) {
+				currentInputConnection?.commitText(charInt.toChar().toString(), 1)
 				return
 			}
 			sendKey(code, event, true)
@@ -1000,6 +1001,7 @@ class InputMethodService : AndroidInputMethodService() {
 		if (voiceImeId != null) {
 			imm.setInputMethod(token, voiceImeId)
 		} else {
+			Log.w(this.packageName,"No voice IME found.")
 			Toast.makeText(this, "No voice IME found.", Toast.LENGTH_SHORT).show()
 		}
 	}
