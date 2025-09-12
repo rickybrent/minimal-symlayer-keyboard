@@ -126,5 +126,12 @@
 				android:summary="[Experimental] Show a toolbar with the modifier status."
 				android:visible="false"
 				app:widgetLayout="@layout/settings_widget_switch" />
+		<SwitchPreference
+			android:key="override_alt_keys"
+			android:title="Override Alt Key Map"
+			android:summary="[Experimental] Override the device alt key map. Needed for latest MP01 OTA."
+			android:defaultValue="true"
+			app:widgetLayout="@layout/settings_widget_switch"
+			/>
 	</PreferenceCategory>
 </PreferenceScreen>

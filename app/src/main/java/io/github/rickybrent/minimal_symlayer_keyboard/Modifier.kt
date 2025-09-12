@@ -181,6 +181,10 @@ class TripleModifier {
 		return if (longPress) longPressKeyCode else shortPressKeyCode
 	}
 
+	fun getAltKey(): Int {
+		return longPressKeyCode
+	}
+
 	fun onKeyDown() {
 		held = true
 

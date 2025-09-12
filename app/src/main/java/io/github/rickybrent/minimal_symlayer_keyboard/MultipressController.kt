@@ -63,6 +63,10 @@ class MultipressController(val substitutions: Array<HashMap<Int, Array<Char>>>) 
 	 * Whether to ignore consonants on the first level.
 	 */
 	var ignoreConsonantsOnFirstLevel = false
+	/**
+	 * Whether to override the device alt map with our own on long press.
+	 */
+	var overrideAltKeys = true
 
 	private var last: Int = 0
 	private var lastTime: Long = 0
@@ -158,12 +162,26 @@ class MultipressController(val substitutions: Array<HashMap<Int, Array<Char>>>) 
 
 				val index = if(count < subst.size) count else 0
 				substitution = subst[index]
-
 				substitution = when(substitution) {
-					MPSUBST_BYPASS -> e.getUnicodeChar(metaState).toChar()
+					MPSUBST_BYPASS -> {
+						val isAlt = (metaState and KeyEvent.META_ALT_ON) != 0
+						if (isAlt && overrideAltKeys) {
+							AltKeyMappings.getAltKeyChar(e.keyCode, false)
+								?: e.getUnicodeChar(KeyEvent.META_ALT_ON).toChar()
+						} else {
+							e.getUnicodeChar(metaState).toChar()
+						}
+					}
 					MPSUBST_NOMETA -> e.getUnicodeChar(0).toChar()
 					MPSUBST_SHIFT -> e.getUnicodeChar(KeyEvent.META_SHIFT_ON).toChar()
-					MPSUBST_ALT -> e.getUnicodeChar(KeyEvent.META_ALT_ON).toChar()
+					MPSUBST_ALT -> {
+						if (overrideAltKeys) {
+							AltKeyMappings.getAltKeyChar(e.keyCode, false)
+								?: e.getUnicodeChar(KeyEvent.META_ALT_ON).toChar()
+						} else {
+							e.getUnicodeChar(KeyEvent.META_ALT_ON).toChar()
+						}
+					}
 					MPSUBST_TOGGLE_SHIFT -> {
 						val mstate = if((metaState and KeyEvent.META_SHIFT_MASK) != 0) {
 							0
@@ -178,7 +196,13 @@ class MultipressController(val substitutions: Array<HashMap<Int, Array<Char>>>) 
 						} else {
 							KeyEvent.META_ALT_ON
 						}
-						e.getUnicodeChar(mstate).toChar()
+						val isAlt = (mstate and KeyEvent.META_ALT_ON) != 0
+						if (isAlt && overrideAltKeys) {
+							AltKeyMappings.getAltKeyChar(e.keyCode, false)
+								?: e.getUnicodeChar(mstate).toChar()
+						} else {
+							e.getUnicodeChar(mstate).toChar()
+						}
 					}
 					MPSUBST_BACKTICK -> '`'
 					MPSUBST_CIRCUMFLEX -> '^'

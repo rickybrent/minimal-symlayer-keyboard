@@ -450,6 +450,10 @@ class InputMethodService : AndroidInputMethodService() {
 					// No mapping: fall back to default Latin character
 					event.getUnicodeChar(enhancedMetaState(event)).toChar().toString()
 				}
+			} else if (alt.get() && multipress.overrideAltKeys) {
+				// temporary workaround with the latest software update.
+				AltKeyMappings.getAltKeyChar(event.keyCode, isShifted)?.toString()
+					?: event.getUnicodeChar(enhancedMetaState(event)).toChar().toString()
 			} else {
 				// Cyrillic layer not active: default Latin behavior
 				event.getUnicodeChar(enhancedMetaState(event)).toChar().toString()
@@ -573,16 +577,23 @@ class InputMethodService : AndroidInputMethodService() {
 	private fun tripleModifierOnKeyUp(keyCode: Int, event: KeyEvent): Boolean {
 		if (keyCode == MP01_KEYCODE_DICTATE || keyCode == MP01_KEYCODE_EMOJI_PICKER) {
 			val modifier = if (event.keyCode == MP01_KEYCODE_EMOJI_PICKER) emojiMeta else dotCtrl;
-			val kbdKey = modifier.getKey()
 			val modKey = modifier.getModKey()
+			var kbdKey = modifier.getKey()
+			var metaState = event.metaState
 			modifier.reset();
 			updateStatusIconIfNeeded(true)
+			if (alt.get() && multipress.overrideAltKeys) {
+				// TODO: this may not even be correct.
+				kbdKey = modifier.getAltKey()
+				metaState = metaState and KeyEvent.META_ALT_ON.inv()
+			}
+
 			if (modKey != 0) {
 				sendKey(modKey, event, false)
 				return true
 			} else if (kbdKey != 0) {
 				// Simulate tapping the shortpress or longpress key.
-				simulateKeyTap(kbdKey, event, event.metaState)
+				simulateKeyTap(kbdKey, event, metaState)
 				consumeModifierNext()
 				return true
 			}
@@ -766,6 +777,11 @@ class InputMethodService : AndroidInputMethodService() {
 			onSymKey(event, true)
 			onSymKey(event, false)
 		} else {
+			val altChar = event.getUnicodeChar(code).toString()
+			if (multipress.overrideAltKeys && altChar != "") {
+				currentInputConnection?.commitText(altChar, 1)
+				return
+			}
 			sendKey(code, event, true)
 			sendKey(code, event, false)
 		}
@@ -877,6 +893,7 @@ class InputMethodService : AndroidInputMethodService() {
 		alt.nextDidConsume()
 		caps.nextDidConsume()
 		dotCtrl.nextDidConsume()
+		emojiMeta.nextDidConsume()
 		updateStatusIconIfNeeded()
 	}
 
@@ -943,6 +960,7 @@ class InputMethodService : AndroidInputMethodService() {
 		multipress.ignoreDotSpace = !preferences.getBoolean("DotSpace", true)
 		multipress.ignoreConsonantsOnFirstLevel = preferences.getBoolean("FirstLevelOnlyVowels", false)
 		multipress.ligaturesEnabled = preferences.getBoolean("pref_enable_ligatures", false)
+		multipress.overrideAltKeys = preferences.getBoolean("override_alt_keys", true)
 
 		cyrillicLayerToggleEnabled = preferences.getBoolean("pref_enable_cyrillic_layer", false)
 
