@@ -417,8 +417,8 @@ class InputMethodService : AndroidInputMethodService() {
 					}
 
 					consumeModifierNext()
+					vibrate()
 				}
-				vibrate()
 				return true
 			}
 		}
@@ -962,6 +962,7 @@ class InputMethodService : AndroidInputMethodService() {
 		multipress.ignoreConsonantsOnFirstLevel = preferences.getBoolean("FirstLevelOnlyVowels", false)
 		multipress.ligaturesEnabled = preferences.getBoolean("pref_enable_ligatures", false)
 		multipress.overrideAltKeys = preferences.getBoolean("override_alt_keys", true)
+		multipress.longPressThreshold = nextThreshold
 
 		cyrillicLayerToggleEnabled = preferences.getBoolean("pref_enable_cyrillic_layer", false)
 

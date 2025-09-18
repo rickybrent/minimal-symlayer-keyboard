@@ -67,6 +67,14 @@ class MultipressController(val substitutions: Array<HashMap<Int, Array<Char>>>) 
 	 * Whether to override the device alt map with our own on long press.
 	 */
 	var overrideAltKeys = true
+	/**
+	 * Minimum number of key "repeats" required for multipress.
+	 */
+	var repeatRequirement = 4
+	/**
+	 * The minimum time before it is considered a long press, in milliseconds.
+	 */
+	var longPressThreshold = 350
 
 	private var last: Int = 0
 	private var lastTime: Long = 0
@@ -137,12 +145,17 @@ class MultipressController(val substitutions: Array<HashMap<Int, Array<Char>>>) 
 		val keyCode = e.keyCode
 		val t = System.currentTimeMillis()
 		if(last == keyCode && t - lastTime < multipressThreshold) {
+			if(t - lastTime < longPressThreshold) {
+				repeatRequirement = e.repeatCount
+				return MPSUBST_BYPASS
+			}
+			val repeatCount = e.repeatCount - repeatRequirement
 			lastTime = t
 
-			if(e.repeatCount == 1) {
+			if(repeatCount == 1) {
 				++longPressCount
 				count = 0
-			} else if(e.repeatCount > 1) {
+			} else if(repeatCount > 1) {
 				return MPSUBST_BYPASS
 			}
 
