@@ -128,6 +128,15 @@ val templates = hashMapOf(
 		KeyEvent.KEYCODE_C to arrayOf('ç', MPSUBST_BYPASS),
 		KeyEvent.KEYCODE_SPACE to arrayOf(MPSUBST_STR_DOTSPACE)
 	),
+	"hu" to hashMapOf(
+		KeyEvent.KEYCODE_A to arrayOf('´', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_E to arrayOf('´', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_I to arrayOf('´', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_O to arrayOf('´', '¨', '˝', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_U to arrayOf('´', '¨', '˝', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_S to arrayOf('ß', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_SPACE to arrayOf(MPSUBST_STR_DOTSPACE)
+	),
 	"dk-no" to hashMapOf(
 		KeyEvent.KEYCODE_A to arrayOf('å', 'æ', MPSUBST_BYPASS),
 		KeyEvent.KEYCODE_O to arrayOf('ø', 'ö', MPSUBST_BYPASS),
