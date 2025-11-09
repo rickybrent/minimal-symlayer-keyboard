@@ -128,13 +128,25 @@ val templates = hashMapOf(
 		KeyEvent.KEYCODE_C to arrayOf('ç', MPSUBST_BYPASS),
 		KeyEvent.KEYCODE_SPACE to arrayOf(MPSUBST_STR_DOTSPACE)
 	),
-	"hu" to hashMapOf(
-		KeyEvent.KEYCODE_A to arrayOf('´', MPSUBST_BYPASS),
+	"hu-de" to hashMapOf(
+		KeyEvent.KEYCODE_A to arrayOf('´', '¨', MPSUBST_BYPASS),
 		KeyEvent.KEYCODE_E to arrayOf('´', MPSUBST_BYPASS),
 		KeyEvent.KEYCODE_I to arrayOf('´', MPSUBST_BYPASS),
 		KeyEvent.KEYCODE_O to arrayOf('´', '¨', 'ő', MPSUBST_BYPASS),
 		KeyEvent.KEYCODE_U to arrayOf('´', '¨', 'ű', MPSUBST_BYPASS),
 		KeyEvent.KEYCODE_S to arrayOf('ß', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_SPACE to arrayOf(MPSUBST_STR_DOTSPACE)
+	),
+	"pl" to hashMapOf(
+		KeyEvent.KEYCODE_A to arrayOf('ą', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_E to arrayOf('ę', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_L to arrayOf('ł', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_O to arrayOf('´', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_C to arrayOf('´', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_N to arrayOf('´', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_S to arrayOf('´', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_Z to arrayOf('ż', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_X to arrayOf('ź', MPSUBST_BYPASS),
 		KeyEvent.KEYCODE_SPACE to arrayOf(MPSUBST_STR_DOTSPACE)
 	),
 	"dk-no" to hashMapOf(
@@ -148,6 +160,13 @@ val templates = hashMapOf(
 		KeyEvent.KEYCODE_A to arrayOf('ä', 'å', 'æ', MPSUBST_BYPASS),
 		KeyEvent.KEYCODE_O to arrayOf('ö', 'ø', MPSUBST_BYPASS),
 		KeyEvent.KEYCODE_S to arrayOf('ß', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_SPACE to arrayOf(MPSUBST_STR_DOTSPACE)
+	),
+	"rom" to hashMapOf(
+		KeyEvent.KEYCODE_A to arrayOf('ă', 'â', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_I to arrayOf('î', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_S to arrayOf('ș', MPSUBST_BYPASS),
+		KeyEvent.KEYCODE_T to arrayOf('ț', MPSUBST_BYPASS),
 		KeyEvent.KEYCODE_SPACE to arrayOf(MPSUBST_STR_DOTSPACE)
 	),
 	"order1" to hashMapOf( // áàâäã
@@ -720,6 +739,10 @@ class InputMethodService : AndroidInputMethodService() {
 			}
 			KeyEvent.KEYCODE_A -> { // Assistant (uses a different action)
 				launchApp(Intent.ACTION_ASSIST)
+				true
+			}
+            KeyEvent.KEYCODE_S -> { // Messaging
+				launchApp(Intent.ACTION_MAIN, Intent.CATEGORY_APP_MESSAGING )
 				true
 			}
 			KeyEvent.KEYCODE_C -> { // Contacts
