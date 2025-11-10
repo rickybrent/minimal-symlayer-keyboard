@@ -4,10 +4,12 @@
 		<item>Spanish</item>
 		<item>German</item>
 		<item>Portuguese</item>
-		<item>Hungarian</item>
+		<item>Hungarian-German</item>
+		<item>Polish</item>
 		<item>French+ES/DE/PT</item>
 		<item>Danish-Norwegian</item>
 		<item>Swedish-Finnish</item>
+		<item>Romanian</item>
 		<item>áàâäã</item>
 		<item>àáâäã</item>
 	</string-array>
@@ -16,10 +18,12 @@
 		<item>es</item>
 		<item>de</item>
 		<item>pt</item>
-		<item>hu</item>
+		<item>hu-de</item>
+		<item>pl</item>
 		<item>fr-ext</item>
 		<item>dk-no</item>
 		<item>se-fi</item>
+		<item>rom</item>
 		<item>order1</item>
 		<item>order2</item>
 	</string-array>
