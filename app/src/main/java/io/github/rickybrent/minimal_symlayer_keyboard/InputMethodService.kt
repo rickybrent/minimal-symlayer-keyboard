@@ -290,6 +290,12 @@ class InputMethodService : AndroidInputMethodService() {
 		}
 	}
 
+	override fun onDestroy() {
+		super.onDestroy()
+		pickerManager?.hide()
+		unregisterReceiver(unlockReceiver)
+	}
+
 	override fun onCreateInputView(): View {
 		mainInputView = layoutInflater.inflate(R.layout.input_view_container, null)
 
@@ -994,7 +1000,6 @@ class InputMethodService : AndroidInputMethodService() {
 		multipress.ignoreConsonantsOnFirstLevel = preferences.getBoolean("FirstLevelOnlyVowels", false)
 		multipress.ligaturesEnabled = preferences.getBoolean("pref_enable_ligatures", false)
 		multipress.overrideAltKeys = preferences.getBoolean("override_alt_keys", true)
-		multipress.longPressThreshold = nextThreshold
 
 		cyrillicLayerToggleEnabled = preferences.getBoolean("pref_enable_cyrillic_layer", false)
 
