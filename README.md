@@ -120,6 +120,31 @@ You can enable multipress and select a language-specific template for characters
 | `u` | `ú` |
 | `c` | `ç` |
 
+#### Hungarian-German
+
+| Key | Multipress |
+|---|---|
+| `a` | `á`, `ä` |
+| `e` | `é` |
+| `i` | `í` |
+| `o` | `ó`, `ö`, `ő` |
+| `u` | `ú`, `ü`, `ű` |
+| `s` | `ß` |
+
+#### Polish
+
+| Key | Multipress |
+|---|---|
+| `a` | `ą` |
+| `e` | `ę` |
+| `l` | `ł` |
+| `o` | `ó` |
+| `c` | `ć` |
+| `n` | `ń` |
+| `s` | `ś` |
+| `z` | `ż` |
+| `x` | `ź` |
+
 #### Danish-Norwegian
 
 | Key | Multipress |
@@ -146,6 +171,15 @@ You can enable multipress and select a language-specific template for characters
 | `o` | `ô`, `ó`, `ò`, `ö`, `õ` |
 | `u` | `ù`, `û`, `ú`, `ü` |
 | `c` | `ç` |
+
+#### Romanian
+
+| Key | Multipress |
+|---|---|
+| `a` | `ă`, `â` |
+| `i` | `î` |
+| `s` | `ș` |
+| `t` | `ț` |
 
 #### áàâäã
 
