@@ -201,6 +201,9 @@ class InputMethodService : AndroidInputMethodService() {
 	private val emojiMeta = TripleModifier()
 	private val caps = Modifier()
 	private val cyrillicLayer = CyrillicLayerModifier()
+	private val hangulComposer = HangulComposer()
+	private val koreanInput = KoreanInputModifier()
+	private var koreanInputToggleEnabled = false
 
 	private var lastShift = false
 	private var lastAlt = false
@@ -332,6 +335,9 @@ class InputMethodService : AndroidInputMethodService() {
 
 		updateFromPreferences()
 
+		// Reset Hangul composer when starting input
+		hangulComposer.reset(currentInputConnection)
+
 		if(!sym.get()) {
 			updateAutoCapitalization()
 		}
@@ -346,6 +352,8 @@ class InputMethodService : AndroidInputMethodService() {
 		isInputViewActive = false
 		shift.reset()
 		caps.reset()
+		// Ensure composer state cleared
+		hangulComposer.reset(currentInputConnection)
 		updateStatusIconIfNeeded()
 		pickerManager?.hide()
 	}
@@ -406,6 +414,8 @@ class InputMethodService : AndroidInputMethodService() {
 					}
 					if (cyrillicLayerToggleEnabled)
 						cyrillicLayer.onRightShiftDown()
+					if (koreanInputToggleEnabled)
+						koreanInput.onRightShiftDown()
 					updateStatusIconIfNeeded(true)
 				}
 				KeyEvent.KEYCODE_SYM -> {
@@ -438,8 +448,45 @@ class InputMethodService : AndroidInputMethodService() {
 			return onSymKey(event, true)
 		}
 
-		// Apply multipress substitution
-		if(event.isPrintingKey || event.keyCode == KeyEvent.KEYCODE_SPACE) {
+		// Instant toggle for language layers when holding Right Shift and pressing Space
+		if (!event.isLongPress && event.repeatCount == 0 && event.keyCode == KeyEvent.KEYCODE_SPACE) {
+			var handled = false
+			// Prefer Korean if both toggles are enabled and both are tracking right-shift
+			if (koreanInputToggleEnabled && koreanInput.isRightShiftPressed()) {
+				koreanInput.instantToggle()
+				// Mutual exclusivity safeguard
+				if (koreanInput.isActive() && cyrillicLayer.isActive()) {
+					cyrillicLayer.deactivate()
+				}
+				// Reset composer whenever Korean mode changes
+				hangulComposer.reset(currentInputConnection)
+				Toast.makeText(this, if (koreanInput.isActive()) "한국" else "ENG", Toast.LENGTH_SHORT).show()
+				vibrate()
+				updateStatusIconIfNeeded(true)
+				handled = true
+			} else if (cyrillicLayerToggleEnabled && cyrillicLayer.isRightShiftPressed()) {
+				cyrillicLayer.instantToggle()
+				// If Cyrillic toggled on, ensure Korean is off
+				if (cyrillicLayer.isActive() && koreanInput.isActive()) {
+					koreanInput.deactivate()
+					// Also reset composer when leaving Korean
+					hangulComposer.reset(currentInputConnection)
+				}
+				Toast.makeText(this, if (cyrillicLayer.isActive()) "РУС" else "ENG", Toast.LENGTH_SHORT).show()
+				vibrate()
+				updateStatusIconIfNeeded(true)
+				handled = true
+			}
+			if (handled) {
+				// Prevent the right-shift key-up from arming a one-shot Shift (capitalizing next char)
+				shift.suppressNextOnKeyUpOnce()
+				// Do not treat this SPACE as input when used for toggling
+				return true
+			}
+		}
+
+		// Apply multipress substitution (disabled in Korean input mode)
+		if(!koreanInput.isActive() && (event.isPrintingKey || event.keyCode == KeyEvent.KEYCODE_SPACE)) {
 			val char = multipress.process(event, enhancedMetaState(event))
 			if(char != MPSUBST_BYPASS) {
 				if(char != MPSUBST_NOTHING) {
@@ -457,10 +504,16 @@ class InputMethodService : AndroidInputMethodService() {
 			}
 		}
 
-		// Use default behavior for backspace and delete, with a few tweaks
+		// Handle backspace/delete
 		if(event.keyCode == KeyEvent.KEYCODE_DEL || event.keyCode == KeyEvent.KEYCODE_FORWARD_DEL) {
 			multipress.reset()
-
+			if (koreanInput.isActive() && event.keyCode == KeyEvent.KEYCODE_DEL) {
+				// Let Hangul composer handle backspace first; if it consumed, stop here
+				if (hangulComposer.backspace(currentInputConnection)) {
+					consumeModifierNext()
+					return true
+				}
+			}
 			consumeModifierNext()
 
 			return super.onKeyDown(keyCode, event)
@@ -473,6 +526,37 @@ class InputMethodService : AndroidInputMethodService() {
 
 		// Print something if it is a simple printing key press
 		if((event.isPrintingKey || event.keyCode == KeyEvent.KEYCODE_SPACE || (event.keyCode == KeyEvent.KEYCODE_ENTER && shift.get()))) {
+			if (koreanInput.isActive()) {
+				// In Korean mode, honor Alt overrides before Hangul composition
+				val isShifted = shift.get() || caps.get()
+				if (alt.get() && multipress.overrideAltKeys) {
+					val altChar = AltKeyMappings.getAltKeyChar(event.keyCode, isShifted)
+					if (altChar != null) {
+						hangulComposer.reset(currentInputConnection)
+						currentInputConnection?.commitText(altChar.toString(), 1)
+						consumeModifierNext()
+						return true
+					}
+				}
+				when (event.keyCode) {
+					KeyEvent.KEYCODE_SPACE -> {
+						hangulComposer.handleSpaceOrEnter(currentInputConnection, " ")
+						consumeModifierNext()
+						return true
+					}
+					KeyEvent.KEYCODE_ENTER -> {
+						hangulComposer.handleSpaceOrEnter(currentInputConnection, "\n")
+						consumeModifierNext()
+						return true
+					}
+					else -> {
+						val ch = event.getUnicodeChar(enhancedMetaState(event)).toChar()
+						hangulComposer.inputLatinChar(ch, currentInputConnection)
+						consumeModifierNext()
+						return true
+					}
+				}
+			}
 			val isShifted = shift.get() || caps.get()
 			val str = if (cyrillicLayer.isActive()) {
 				if (alt.get() && CyrillicMappings.hasAltCyrillicMapping(event.keyCode)) {
@@ -581,10 +665,18 @@ class InputMethodService : AndroidInputMethodService() {
 				shift.onKeyUp()
 				if (cyrillicLayerToggleEnabled)
 					cyrillicLayer.onRightShiftUp()
-					// Check if Cyrillic layer was toggled and provide haptic feedback
-					if (cyrillicLayer.wasJustToggled()) {
+				// Check if Cyrillic layer was toggled and provide haptic feedback
+				if (cyrillicLayer.wasJustToggled()) {
+					vibrate()
+				}
+				if (koreanInputToggleEnabled) {
+					koreanInput.onRightShiftUp()
+					if (koreanInput.wasJustToggled()) {
+						hangulComposer.reset(currentInputConnection)
+						Toast.makeText(this, if (koreanInput.isActive()) "한국" else "ENG", Toast.LENGTH_SHORT).show()
 						vibrate()
 					}
+				}
 				updateStatusIconIfNeeded(true)
 			}
 			KeyEvent.KEYCODE_SYM -> {
@@ -747,7 +839,7 @@ class InputMethodService : AndroidInputMethodService() {
 				launchApp(Intent.ACTION_ASSIST)
 				true
 			}
-            KeyEvent.KEYCODE_S -> { // Messaging
+			KeyEvent.KEYCODE_S -> { // Messaging
 				launchApp(Intent.ACTION_MAIN, Intent.CATEGORY_APP_MESSAGING )
 				true
 			}
@@ -1002,6 +1094,23 @@ class InputMethodService : AndroidInputMethodService() {
 		multipress.overrideAltKeys = preferences.getBoolean("override_alt_keys", true)
 
 		cyrillicLayerToggleEnabled = preferences.getBoolean("pref_enable_cyrillic_layer", false)
+		koreanInputToggleEnabled = preferences.getBoolean("pref_enable_korean_input", false)
+
+		// Enforce mutual exclusivity at settings level: if both enabled, disable Cyrillic layer
+		if (cyrillicLayerToggleEnabled && koreanInputToggleEnabled) {
+			preferences.edit().putBoolean("pref_enable_cyrillic_layer", false).apply()
+			cyrillicLayerToggleEnabled = false
+		}
+
+		// If Cyrillic feature disabled, also deactivate runtime layer
+		if (!cyrillicLayerToggleEnabled && cyrillicLayer.isActive()) {
+			cyrillicLayer.deactivate()
+		}
+		// If Korean feature disabled, also deactivate runtime mode and reset composer
+		if (!koreanInputToggleEnabled && koreanInput.isActive()) {
+			koreanInput.deactivate()
+			hangulComposer.reset(currentInputConnection)
+		}
 
 		val templateId = preferences.getString("FirstLevelTemplate", "fr")
 		if(templates.containsKey(templateId)) {
@@ -1015,6 +1124,13 @@ class InputMethodService : AndroidInputMethodService() {
 		emojiMeta.shortPressKeyCode = preferenceToKeyCode(preferences.getString("pref_emojimeta_tap", "emoji"))
 		emojiMeta.longPressKeyCode = preferenceToKeyCode(preferences.getString("pref_emojimeta_long_press", "0"))
 		emojiMeta.modKeyCode = preferenceToKeyCode(preferences.getString("pref_emojimeta_hold", "meta"))
+
+
+		// MP01 right-hand friendly Sym layer toggle (opt-in by default)
+		val rightHandSym = preferences.getBoolean("pref_mp01_right_hand_sym", false)
+		SymKeyMappings.enableRightHandMp01(rightHandSym)
+		// Refresh picker symbols if currently shown to reflect new labels/actions
+		pickerManager?.refreshSymbols()
 
 		// TODO: Separate modifier and special-key logic and add better handling for sym and right shift.
 	}
@@ -1082,6 +1198,19 @@ class InputMethodService : AndroidInputMethodService() {
 		emojiMeta.reset()
 		caps.reset()
 		cyrillicLayer.reset()
+		updateStatusIconIfNeeded(true)
+	}
+
+	/**
+	 * Reset only the Emoji Meta modifier state and refresh the status icon.
+	 *
+	 * This is used by the picker when it gets dismissed via the emoji button
+	 * (or close/back). Without this, if the picker was opened using an
+	 * emoji meta shortcut (e.g., emoji + space), the modifier could remain
+	 * latched, keeping the keyboard in the shortcut mode.
+	 */
+	fun resetEmojiMeta() {
+		emojiMeta.reset()
 		updateStatusIconIfNeeded(true)
 	}
 }

@@ -13,6 +13,12 @@ object ShiftPress : SymAction()
 data class KeyMapping(val display: String, val action: SymAction)
 
 object SymKeyMappings {
+    // Runtime toggle to switch MP01 sym layout between default and right-hand friendly
+    @Volatile private var mp01RightHandFriendly: Boolean = false
+
+    fun enableRightHandMp01(enable: Boolean) {
+        mp01RightHandFriendly = enable
+    }
     // --- UNIHERTZ TITAN MAPPINGS ---
     private val titanMap: Map<Int, KeyMapping> = mapOf(
         KeyEvent.KEYCODE_W to KeyMapping("↑", SendKey(KeyEvent.KEYCODE_DPAD_UP)),
@@ -41,7 +47,8 @@ object SymKeyMappings {
     )
 
     // --- MINIMAL PHONE MP01 MAPPINGS ---
-    private val mp01Map: Map<Int, KeyMapping> = mapOf(
+    // Default (original) MP01 mappings
+    private val mp01DefaultMap: Map<Int, KeyMapping> = mapOf(
         KeyEvent.KEYCODE_W to KeyMapping("↑", SendKey(KeyEvent.KEYCODE_DPAD_UP)),
         KeyEvent.KEYCODE_A to KeyMapping("←", SendKey(KeyEvent.KEYCODE_DPAD_LEFT)),
         KeyEvent.KEYCODE_S to KeyMapping("↓", SendKey(KeyEvent.KEYCODE_DPAD_DOWN)),
@@ -71,9 +78,43 @@ object SymKeyMappings {
         KeyEvent.KEYCODE_PERIOD to KeyMapping(">", SendChar(">"))
     )
 
+    // Right-hand friendly variant (qwer <-> yuio, asdf <-> hjkl)
+    private val mp01RightHandMap: Map<Int, KeyMapping> = mapOf(
+        KeyEvent.KEYCODE_W to KeyMapping("]", SendChar("]")),
+        KeyEvent.KEYCODE_A to KeyMapping("{", SendChar("{")),
+        KeyEvent.KEYCODE_S to KeyMapping("}", SendChar("}")),
+        KeyEvent.KEYCODE_D to KeyMapping("^", SendChar("^")),
+        KeyEvent.KEYCODE_Q to KeyMapping("[", SendChar("[")),
+        KeyEvent.KEYCODE_E to KeyMapping("(", SendChar("(")),
+        KeyEvent.KEYCODE_R to KeyMapping(")", SendChar(")")),
+        KeyEvent.KEYCODE_F to KeyMapping("|", SendChar("|")),
+        KeyEvent.KEYCODE_Z to KeyMapping("⇥", SendKey(KeyEvent.KEYCODE_TAB)),
+        KeyEvent.KEYCODE_X to KeyMapping("✂︎", SendKey(KeyEvent.KEYCODE_CUT)),
+        KeyEvent.KEYCODE_C to KeyMapping("⎘︎", SendKey(KeyEvent.KEYCODE_COPY)),
+        KeyEvent.KEYCODE_V to KeyMapping("📋︎", SendKey(KeyEvent.KEYCODE_PASTE)),
+        KeyEvent.KEYCODE_T to KeyMapping("~", SendChar("~")),
+        KeyEvent.KEYCODE_G to KeyMapping("`", SendChar("`")),
+        KeyEvent.KEYCODE_Y to KeyMapping("⇞", SendKey(KeyEvent.KEYCODE_PAGE_UP)),
+        KeyEvent.KEYCODE_U to KeyMapping("↑", SendKey(KeyEvent.KEYCODE_DPAD_UP)),
+        KeyEvent.KEYCODE_I to KeyMapping("⇟", SendKey(KeyEvent.KEYCODE_PAGE_DOWN)),
+        KeyEvent.KEYCODE_O to KeyMapping("⇱", SendKey(KeyEvent.KEYCODE_MOVE_HOME)),
+        KeyEvent.KEYCODE_P to KeyMapping("€/£", SendChar("€", "£")),
+        KeyEvent.KEYCODE_H to KeyMapping("←", SendKey(KeyEvent.KEYCODE_DPAD_LEFT)),
+        KeyEvent.KEYCODE_J to KeyMapping("↓", SendKey(KeyEvent.KEYCODE_DPAD_DOWN)),
+        KeyEvent.KEYCODE_K to KeyMapping("→", SendKey(KeyEvent.KEYCODE_DPAD_RIGHT)),
+        KeyEvent.KEYCODE_L to KeyMapping("⇲", SendKey(KeyEvent.KEYCODE_MOVE_END)),
+        KeyEvent.KEYCODE_B to KeyMapping("\\", SendChar("\\")),
+        KeyEvent.KEYCODE_N to KeyMapping("/", SendChar("/")),
+        KeyEvent.KEYCODE_M to KeyMapping("<", SendChar("<")),
+        KeyEvent.KEYCODE_PERIOD to KeyMapping(">", SendChar(">"))
+    )
+
     fun getMapping(keyCode: Int, deviceType: InputMethodService.DeviceType): KeyMapping? {
         return when (deviceType) {
-            InputMethodService.DeviceType.MP01 -> mp01Map[keyCode]
+            InputMethodService.DeviceType.MP01 -> {
+                val map = if (mp01RightHandFriendly) mp01RightHandMap else mp01DefaultMap
+                map[keyCode]
+            }
             InputMethodService.DeviceType.TITAN -> titanMap[keyCode]
         }
     }

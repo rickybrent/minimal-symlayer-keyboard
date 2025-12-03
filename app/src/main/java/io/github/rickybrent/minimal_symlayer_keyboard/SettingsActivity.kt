@@ -20,6 +20,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceDataStore
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceGroup
+import androidx.preference.TwoStatePreference
 
 class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
 
@@ -144,6 +145,22 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
 			if (context != null) {
 				if (BuildConfig.DEBUG) {
 					findPreference<Preference>("pref_show_toolbar")?.isVisible = true
+				}
+				// Ensure mutual exclusivity between Cyrillic Layer and Korean Input settings
+				findPreference<TwoStatePreference>("pref_enable_korean_input")?.setOnPreferenceChangeListener { _, newValue ->
+					val enable = newValue as Boolean
+					if (enable) {
+						// Turn off Cyrillic if being enabled
+						findPreference<TwoStatePreference>("pref_enable_cyrillic_layer")?.isChecked = false
+					}
+					true
+				}
+				findPreference<TwoStatePreference>("pref_enable_cyrillic_layer")?.setOnPreferenceChangeListener { _, newValue ->
+					val enable = newValue as Boolean
+					if (enable) {
+						findPreference<TwoStatePreference>("pref_enable_korean_input")?.isChecked = false
+					}
+					true
 				}
 				findPreference<Preference>("Reset")?.onPreferenceClickListener = Preference.OnPreferenceClickListener {
 					AlertDialog.Builder(context, R.style.AlertDialogTheme)

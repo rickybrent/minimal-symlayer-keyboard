@@ -182,6 +182,8 @@ class PickerManager(private val context: Context, private val service: InputMeth
 
     fun hide() {
         inlineViewContainer?.visibility = View.GONE
+        // Ensure we exit any emoji meta shortcut mode used to open the picker
+        service.resetEmojiMeta()
     }
 
     private fun setupPickerView() {
@@ -293,5 +295,18 @@ class PickerManager(private val context: Context, private val service: InputMeth
 
     fun isShowing(): Boolean {
         return inlineViewContainer?.visibility == View.VISIBLE
+    }
+
+    fun refreshSymbols() {
+        if (::recyclerView.isInitialized && currentView == ViewType.SYMBOL) {
+            // The adapter pulls display labels dynamically via SymKeyMappings,
+            // so a simple notify is enough to refresh the grid.
+            symbolAdapter?.notifyDataSetChanged()
+            recyclerView.adapter?.notifyDataSetChanged()
+        } else {
+            // If not currently showing symbol view but adapter exists, still refresh in case
+            // it becomes visible shortly.
+            symbolAdapter?.notifyDataSetChanged()
+        }
     }
 }
