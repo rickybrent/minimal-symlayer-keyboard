@@ -210,8 +210,11 @@ You can enable multipress and select a language-specific template for characters
 
 #### Cyrillic Layer
 
-A set of [Cyrillic Layers](readme-symbehavior-mp01-cyrillic.png) based on the Gemini PDA layout can enabled and toggled with a long press on the right shift key. 
+A set of [Cyrillic Layers](readme-symbehavior-mp01-cyrillic.png) based on the Gemini PDA layout can enabled and set up to toggle by long-pressing right shift or pressing right shift + space.
 
+#### Korean Input
+
+Alternatively, [Korean input](readme-symbehavior-mp01-korean.png) can also be enabled and set up to toggle by long-pressing right shift or pressing right shift + space.
 
 ### Additional Characters (after Long Press)
 
