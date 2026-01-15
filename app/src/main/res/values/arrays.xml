@@ -10,6 +10,7 @@
 		<item>Danish-Norwegian</item>
 		<item>Swedish-Finnish</item>
 		<item>Romanian</item>
+		<item>Lithuanian</item>
 		<item>áàâäã</item>
 		<item>àáâäã</item>
 	</string-array>
@@ -24,6 +25,7 @@
 		<item>dk-no</item>
 		<item>se-fi</item>
 		<item>rom</item>
+		<item>lt</item>
 		<item>order1</item>
 		<item>order2</item>
 	</string-array>
