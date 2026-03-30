@@ -23,6 +23,16 @@ class HangulComposer {
 
 	fun isComposing(): Boolean = cho != -1 || jung != -1 || jong != -1
 
+	/**
+	 * Commit the current composing syllable as final text without clearing
+	 * the composing region first (unlike [reset], which discards state).
+	 */
+	fun commitComposingText(ic: InputConnection?) {
+		if (isComposing()) {
+			commitCurrent(ic)
+		}
+	}
+
 	fun inputLatinChar(ch: Char, ic: InputConnection?) {
 		val jamo = latinToJamo(ch) ?: run {
 			// Non-mapped key: commit current and pass through

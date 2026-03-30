@@ -729,11 +729,6 @@ class InputMethodService : AndroidInputMethodService() {
 				sendKey(modKey, event, false)
 				return true
 			} else if (kbdKey != 0) {
-				// Finalize any in-progress Hangul composition before sending the key,
-				// otherwise the composing text gets displaced after the new character.
-				if (koreanInput.isActive() && hangulComposer.isComposing()) {
-					hangulComposer.commitComposingText(currentInputConnection)
-				}
 				// Simulate tapping the shortpress or longpress key.
 				simulateKeyTap(kbdKey, event, metaState)
 				consumeModifierNext()
