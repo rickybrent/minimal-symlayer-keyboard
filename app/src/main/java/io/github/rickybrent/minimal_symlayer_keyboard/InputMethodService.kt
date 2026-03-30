@@ -913,6 +913,11 @@ class InputMethodService : AndroidInputMethodService() {
 			dotCtrl.reset()
 			return
 		}
+		if (koreanInput.isActive() && hangulComposer.isComposing() && code == KeyEvent.KEYCODE_PERIOD) {
+			hangulComposer.commitComposingText(currentInputConnection)
+			currentInputConnection?.commitText(".", 1)
+			return
+		}
 		val event = makeKeyEvent(original, code, metaState, original.action, original.source, original.deviceId)
 		if (sym.get()) {
 			onSymKey(event, true)
